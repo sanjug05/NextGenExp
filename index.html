@@ -1648,15 +1648,14 @@ function openSRDetail(id){
       <td data-label="Notes">${esc(rec.note||'—')}</td>
     </tr>`;
   }).join('');
-  const log=(s.changeLog||[]).slice(-6).reverse();
-  const logHtml=log.length?`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px">Recent Changes</div>${log.map(l=>`<div style="font-size:0.72rem;color:var(--c-text2);padding:4px 0;border-bottom:1px solid var(--c-border)"><i class="fas fa-clock" style="opacity:0.5;margin-right:5px"></i>${esc(l.text||((l.phase||'')+': '+(l.field||'')+' → '+(l.to||'')))} <span style="color:var(--c-text3)">· ${fmtDate(l.at)}${l.by?' · '+esc(l.by):''}</span></div>`).join('')}</div>`:'';
+  const logHtml=srHistoryHTML(s,admin);
   document.getElementById('srDetailBody').innerHTML=`
     <div id="srDetailSummary">${buildSRSummary(s)}</div>
     <div style="margin-top:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Phase Tracker ${admin?'<span style="color:var(--c-amber);text-transform:none;font-weight:500">· edits auto-save</span>':''}</div>
     </div>
     <div style="overflow-x:auto;margin-top:8px"><table class="phase-table"><thead><tr><th>Phase</th><th>Target</th><th>Actual</th><th>Owner</th><th>Reason</th><th>Variance</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></div>
-    ${logHtml}`;
+    <div id="srHistory">${logHtml}</div>`;
   if(admin){
     const mark=()=>{srDirty=true;document.getElementById('srDirty')?.classList.add('on');};
     document.querySelectorAll('#srDetailBody .ph-actual,#srDetailBody .ph-owner,#srDetailBody .ph-reason,#srDetailBody .ph-note').forEach(inp=>{
@@ -1666,7 +1665,12 @@ function openSRDetail(id){
   }
   openModal('srDetailModal');
 }
-function refreshSRSummary(id){const s=S.showrooms.find(x=>x.id===id);const el=document.getElementById('srDetailSummary');if(s&&el)el.innerHTML=buildSRSummary(s);}
+function srHistoryHTML(s,admin){
+  const log=(s.changeLog||[]).slice().reverse();
+  const row=l=>`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(l.text||((l.phase?l.phase+': ':'')+(l.field||'')+(l.from?(' '+l.from+' →'):' →')+' '+(l.to||'')))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${fmtDate(l.at)}${l.by?' · '+esc(l.by):''}</span></div>`;
+  return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${log.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${log.length} ${log.length===1?'entry':'entries'}</span>`:''}</div>${log.length?`<div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${log.map(row).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No changes recorded yet.${admin?' Edits to phase dates, owners, or reasons are logged here automatically — with who made the change and when.':' Changes made by admins will appear here.'}</div>`}</div>`;
+}
+function refreshSRSummary(id){const s=S.showrooms.find(x=>x.id===id);const el=document.getElementById('srDetailSummary');if(s&&el)el.innerHTML=buildSRSummary(s);const h=document.getElementById('srHistory');if(s&&h)h.innerHTML=srHistoryHTML(s,isAdmin());}
 function savePhasesFor(id){
   const s=S.showrooms.find(x=>x.id===id);if(!s||!isAdmin())return;
   const start=s.startDate?pd(s.startDate):null;
@@ -1680,16 +1684,16 @@ function savePhasesFor(id){
     if(actVal&&start&&pd(actVal)<start){actInp?.classList.add('input-error');invalid=true;}
     const rec={};if(actVal)rec.actualDate=actVal;if(owner)rec.owner=owner;if(reasonCode)rec.reasonCode=reasonCode;if(note)rec.note=note;
     if(Object.keys(rec).length)newData[p.id]=rec;
-    /* changelog diff */
+    /* changelog diff (capture from -> to) */
     const o=oldData[p.id]||{};
-    if((o.actualDate||'')!==(actVal||''))changes.push({phase:p.name,field:'date',to:actVal||'cleared'});
-    if((o.owner||PHASE_OWNER_DEFAULT[p.id])!==owner)changes.push({phase:p.name,field:'owner',to:owner});
-    if((o.reasonCode||'')!==reasonCode)changes.push({phase:p.name,field:'reason',to:reasonCode?REASON_LABEL[reasonCode]:'cleared'});
+    if((o.actualDate||'')!==(actVal||''))changes.push({phase:p.name,field:'date',from:o.actualDate||'none',to:actVal||'cleared'});
+    if((o.owner||PHASE_OWNER_DEFAULT[p.id])!==owner)changes.push({phase:p.name,field:'owner',from:o.owner||PHASE_OWNER_DEFAULT[p.id],to:owner});
+    if((o.reasonCode||'')!==reasonCode)changes.push({phase:p.name,field:'reason',from:o.reasonCode?REASON_LABEL[o.reasonCode]:'none',to:reasonCode?REASON_LABEL[reasonCode]:'cleared'});
   });
   if(invalid){toast('Actual date can’t be before the start date','error');return;}
   if(!changes.length){srDirty=false;document.getElementById('srDirty')?.classList.remove('on');return;}
   undoStack.push({id,old:oldData});if(undoStack.length>20)undoStack.shift();
-  const cl=(s.changeLog||[]).concat(changes.map(ch=>({...ch,at:new Date().toISOString(),by:email||'admin',text:`${ch.phase}: ${ch.field} → ${ch.to}`}))).slice(-50);
+  const cl=(s.changeLog||[]).concat(changes.map(ch=>({...ch,at:new Date().toISOString(),by:email||'admin',text:`${ch.phase}: ${ch.field} ${ch.from?ch.from+' → ':'→ '}${ch.to}`}))).slice(-100);
   s.data=newData;s.changeLog=cl; /* optimistic */
   updateDoc(doc(db,'showrooms',id),{data:newData,changeLog:cl,updatedAt:serverTimestamp()})
     .then(()=>{srDirty=false;document.getElementById('srDirty')?.classList.remove('on');toast('Saved','success',id);})
@@ -1854,7 +1858,8 @@ function openDLDetail(id){
     ${isRejectStage(cur)?`<div class="nba crit"><i class="fas fa-ban"></i> ${esc(d.rejectionReason||'Rejected')}</div>`:`<div style="background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:16px 12px;margin-bottom:8px"><div style="display:flex">${stepper}</div></div>`}
     ${controls}
     <div style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Documents</div><span style="font-size:0.78rem;font-weight:700;color:${dp>=80?'var(--c-green)':dp>=40?'var(--c-amber)':'var(--c-red)'}" id="dlDocPct">${dp}%</span></div>
-    <div class="doc-grid">${docs}</div></div>`;
+    <div class="doc-grid">${docs}</div></div>
+    ${(()=>{const dlog=(d.stageHistory||[]).slice().reverse();const row=l=>`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(l.note?l.note:(l.stage?'Moved to '+l.stage+(l.reason?' — '+l.reason:''):'Updated'))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${fmtDate(l.at)}${l.by?' · '+esc(l.by):''}</span></div>`;return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(row).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No history yet. Stage moves and document updates are logged here with who made them and when.</div>`}</div>`;})()}`;
   if(admin){
     document.getElementById('dlNextBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx+1]));
     document.getElementById('dlPrevBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx-1]));
@@ -1888,7 +1893,7 @@ async function doMoveStage(id,newStage){
 function execDLStage(id,newStage,reason){
   const d=S.dealers.find(x=>x.id===id);if(!d)return;
   const status=newStage==='Onboarded'?'Completed':isRejectStage(newStage)?'Rejected':'Active';
-  const hist=(d.stageHistory||[]).concat([{stage:newStage,at:new Date().toISOString(),by:email||'admin'}]).slice(-40);
+  const hist=(d.stageHistory||[]).concat([{stage:newStage,reason:reason||null,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);
   const upd={currentStage:newStage,status,stageHistory:hist,updatedAt:serverTimestamp()};
   if(reason)upd.rejectionReason=reason;
   d.currentStage=newStage;d.status=status;d.stageHistory=hist;if(reason)d.rejectionReason=reason; /* optimistic */
@@ -1902,9 +1907,10 @@ function execDLStage(id,newStage,reason){
 function updateDLDoc(id,key,checked){
   const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
   const docs={...(d.documents||{}),[key]:checked};
-  d.documents=docs; /* optimistic */
+  const hist=(d.stageHistory||[]).concat([{note:`${DOC_LABELS[key]||key} ${checked?'marked complete':'unmarked'}`,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);
+  d.documents=docs;d.stageHistory=hist; /* optimistic */
   const pct=docPct(docs);const pe=document.getElementById('dlDocPct');if(pe){pe.textContent=pct+'%';pe.style.color=pct>=80?'var(--c-green)':pct>=40?'var(--c-amber)':'var(--c-red)';}
-  updateDoc(doc(db,'dealerOnboarding',id),{documents:docs,updatedAt:serverTimestamp()})
+  updateDoc(doc(db,'dealerOnboarding',id),{documents:docs,stageHistory:hist,updatedAt:serverTimestamp()})
     .then(()=>{
       /* FIX: do NOT auto-advance the stage. Completing docs makes a partner ELIGIBLE; onboarding stays a deliberate step. */
       if(pct===100&&d.currentStage!=='Onboarded'&&!isRejectStage(d.currentStage||'')){
