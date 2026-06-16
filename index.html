@@ -1665,10 +1665,37 @@ function openSRDetail(id){
   }
   openModal('srDetailModal');
 }
+/* Robust history parsing — original-app entries may use different field names than v7. */
+function firstDefined(...a){for(const x of a)if(x!==undefined&&x!==null)return x;return null;}
+function fmtMaybeDate(v){if(v&&typeof v==='object'&&typeof v.toDate==='function')return fmtDate(v);if(typeof v==='string'&&/^\d{4}-\d{2}-\d{2}/.test(v))return fmtDateShort(v);return String(v);}
+function _histDate(l){return firstDefined(l.at,l.ts,l.time,l.timestamp,l.date,l.changedAt,l.createdAt,l.updatedAt);}
+function _histBy(l){return l.by||l.user||l.changedBy||l.updatedBy||l.email||l.uid||'';}
+function _histDesc(l){
+  if(l==null)return'(change recorded)';
+  if(typeof l!=='object')return String(l);
+  if(l.text&&String(l.text).trim())return String(l.text);
+  if(l.note&&String(l.note).trim())return String(l.note);
+  if(l.message&&String(l.message).trim())return String(l.message);
+  const phase=l.phase||l.phaseName||l.label||'';
+  const field=l.field||l.action||l.type||l.event||l.key||'';
+  const from=firstDefined(l.from,l.old,l.oldValue,l.previous,l.prev,l.fromDate,l.oldDate,l.before);
+  const to=firstDefined(l.to,l.new,l.newValue,l.value,l.toDate,l.newDate,l.after,l.actualDate);
+  if(l.stage&&from==null&&to==null&&!field&&!phase)return'Moved to '+l.stage+(l.reason?' — '+l.reason:'');
+  let body='';
+  if(from!=null||to!=null){const f=(from!=null&&from!=='')?fmtMaybeDate(from):null;const t=(to!=null&&to!=='')?fmtMaybeDate(to):null;body=(field?field+' ':'')+(f?f+' → ':'→ ')+(t||'(cleared)');}
+  else if(field)body=field+(l.reason?' — '+l.reason:'');
+  const head=phase||l.stage||'';
+  if(head&&body)return head+': '+body;
+  if(head)return head+(l.reason?' — '+l.reason:'');
+  if(body)return body;
+  const skip=new Set(['at','ts','time','timestamp','date','changedAt','createdAt','updatedAt','by','user','changedBy','updatedBy','email','uid','id']);
+  const rest=Object.entries(l).filter(([k,v])=>!skip.has(k)&&v!=null&&v!=='');
+  return rest.length?rest.map(([k,v])=>k+': '+(typeof v==='object'?JSON.stringify(v):v)).join(', '):'(change recorded)';
+}
+function histRowHTML(l){const d=_histDate(l),by=_histBy(l);return`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(_histDesc(l))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${d?esc(fmtDate(d)):''}${by?' · '+esc(by):''}</span></div>`;}
 function srHistoryHTML(s,admin){
-  const log=(s.changeLog||[]).slice().reverse();
-  const row=l=>`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(l.text||((l.phase?l.phase+': ':'')+(l.field||'')+(l.from?(' '+l.from+' →'):' →')+' '+(l.to||'')))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${fmtDate(l.at)}${l.by?' · '+esc(l.by):''}</span></div>`;
-  return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${log.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${log.length} ${log.length===1?'entry':'entries'}</span>`:''}</div>${log.length?`<div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${log.map(row).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No changes recorded yet.${admin?' Edits to phase dates, owners, or reasons are logged here automatically — with who made the change and when.':' Changes made by admins will appear here.'}</div>`}</div>`;
+  const log=(s.changeLog||s.history||s.changeHistory||s.auditLog||s.activity||[]).slice().reverse();
+  return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${log.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${log.length} ${log.length===1?'entry':'entries'}</span>`:''}</div>${log.length?`<div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${log.map(histRowHTML).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No changes recorded yet.${admin?' Edits to phase dates, owners, or reasons are logged here automatically — with who made the change and when.':' Changes made by admins will appear here.'}</div>`}</div>`;
 }
 function refreshSRSummary(id){const s=S.showrooms.find(x=>x.id===id);const el=document.getElementById('srDetailSummary');if(s&&el)el.innerHTML=buildSRSummary(s);const h=document.getElementById('srHistory');if(s&&h)h.innerHTML=srHistoryHTML(s,isAdmin());}
 function savePhasesFor(id){
@@ -1859,7 +1886,7 @@ function openDLDetail(id){
     ${controls}
     <div style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Documents</div><span style="font-size:0.78rem;font-weight:700;color:${dp>=80?'var(--c-green)':dp>=40?'var(--c-amber)':'var(--c-red)'}" id="dlDocPct">${dp}%</span></div>
     <div class="doc-grid">${docs}</div></div>
-    ${(()=>{const dlog=(d.stageHistory||[]).slice().reverse();const row=l=>`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(l.note?l.note:(l.stage?'Moved to '+l.stage+(l.reason?' — '+l.reason:''):'Updated'))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${fmtDate(l.at)}${l.by?' · '+esc(l.by):''}</span></div>`;return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(row).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No history yet. Stage moves and document updates are logged here with who made them and when.</div>`}</div>`;})()}`;
+    ${(()=>{const dlog=(d.stageHistory||d.history||d.changeLog||d.changeHistory||d.activity||[]).slice().reverse();return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(histRowHTML).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No history yet. Stage moves and document updates are logged here with who made them and when.</div>`}</div>`;})()}`;
   if(admin){
     document.getElementById('dlNextBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx+1]));
     document.getElementById('dlPrevBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx-1]));
