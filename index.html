@@ -2397,41 +2397,47 @@ function renderDataQuality(){
 /* ── RM MANAGER (Settings) ── */
 let _rmDraft=[];
 function _rmDataCount(v){return [...S.showrooms,...S.dealers,...S.pipeline,...S.properties].filter(r=>String(r.rm||'').trim()===v).length;}
+/* best-guess zone for an RM value = most common zone across its records */
+function guessZone(rmValue){const c={};[...S.showrooms,...S.dealers,...S.pipeline].forEach(r=>{if(String(r.rm||'').trim()===rmValue&&r.zone)c[r.zone]=(c[r.zone]||0)+1;});let best='',n=0;for(const z in c)if(c[z]>n){n=c[z];best=z;}return best;}
+/* seed the draft: from saved list if present, else from the distinct RM names already in records */
+function seedRMDraft(){
+  if(CFG.rms&&CFG.rms.length){_rmDraft=CFG.rms.map(r=>({name:r.name,zone:r.zone||'',_orig:r.name}));}
+  else{_rmDraft=allRmInData().sort((a,b)=>_rmDataCount(b)-_rmDataCount(a)).map(v=>({name:v,zone:guessZone(v),_orig:v}));}
+}
+function _rmPending(){let n=0;_rmDraft.forEach(r=>{const nm=(r.name||'').trim();if(r._orig&&nm&&r._orig!==nm)n+=_rmDataCount(r._orig);});return n;}
 function renderRMManager(){
   const body=document.getElementById('rmManagerBody');if(!body)return;
   if(!_rmDraft.length){
-    body.innerHTML='<div style="color:var(--c-text3);font-size:0.8rem;padding:6px 0">No RMs yet. Add one, or import the names already used in your records.</div>';
+    body.innerHTML='<div style="color:var(--c-text3);font-size:0.8rem;padding:6px 0">No RMs found in your records. Click “Add RM” to create one.</div>';
   }else{
-    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">${_rmDraft.map((r,i)=>`<div style="display:flex;gap:8px;align-items:center"><input class="form-input rm-name" data-i="${i}" value="${esc(r.name||'')}" placeholder="RM name" style="flex:1"><select class="form-select rm-zone" data-i="${i}" style="max-width:170px"><option value="">— Zone —</option>${ZONES.map(z=>`<option ${r.zone===z?'selected':''}>${esc(z)}</option>`).join('')}</select><button class="btn btn-ghost btn-sm rm-del" data-i="${i}" title="Remove" style="color:var(--c-red)"><i class="fas fa-trash"></i></button></div>`).join('')}</div>`;
+    const pend=_rmPending();
+    body.innerHTML=`<div style="font-size:0.72rem;color:var(--c-text3);margin-bottom:10px;line-height:1.6">Edit a name to fix its spelling. Give two rows the <b>same</b> name to merge them. Set a zone — it auto-fills on forms. Saving updates the dropdown everywhere <b>and</b> rewrites matching records to the corrected name.${pend?` <span style="color:var(--c-amber)">${pend} record(s) will be updated on save.</span>`:''}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">${_rmDraft.map((r,i)=>{const cnt=r._orig?_rmDataCount(r._orig):0;const changed=r._orig&&(r.name||'').trim()&&r._orig!==(r.name||'').trim();return `<div style="display:flex;gap:8px;align-items:center"><input class="form-input rm-name" data-i="${i}" value="${esc(r.name||'')}" placeholder="RM name" style="flex:1"><select class="form-select rm-zone" data-i="${i}" style="max-width:150px"><option value="">— Zone —</option>${ZONES.map(z=>`<option ${r.zone===z?'selected':''}>${esc(z)}</option>`).join('')}</select><span style="font-size:0.66rem;color:${changed?'var(--c-amber)':'var(--c-text3)'};white-space:nowrap;min-width:74px;text-align:right" title="${changed?'will rename '+cnt+' record(s) on save':''}">${cnt?cnt+' rec'+(cnt!==1?'s':''):'new'}${changed?' ✎':''}</span><button class="btn btn-ghost btn-sm rm-del" data-i="${i}" title="Remove from list" style="color:var(--c-red)"><i class="fas fa-trash"></i></button></div>`;}).join('')}</div>`;
   }
-  body.querySelectorAll('.rm-name').forEach(inp=>inp.addEventListener('input',()=>{_rmDraft[+inp.dataset.i].name=inp.value;}));
+  body.querySelectorAll('.rm-name').forEach(inp=>{inp.addEventListener('input',()=>{_rmDraft[+inp.dataset.i].name=inp.value;});inp.addEventListener('change',()=>renderRMManager());});
   body.querySelectorAll('.rm-zone').forEach(sel=>sel.addEventListener('change',()=>{_rmDraft[+sel.dataset.i].zone=sel.value;}));
   body.querySelectorAll('.rm-del').forEach(b=>b.addEventListener('click',()=>{_rmDraft.splice(+b.dataset.i,1);renderRMManager();}));
-  renderRMRemap();
 }
-function renderRMRemap(){
-  const wrap=document.getElementById('rmRemapWrap');if(!wrap)return;
-  const canon=_rmDraft.map(r=>(r.name||'').trim()).filter(Boolean);
-  const variants=allRmInData().filter(v=>!canon.includes(v));
-  if(!variants.length){wrap.innerHTML=canon.length?'<div style="font-size:0.74rem;color:var(--c-green)"><i class="fas fa-circle-check"></i> Every RM in your records matches the list above.</div>':'';return;}
-  wrap.innerHTML=`<div style="border-top:1px solid var(--c-border);padding-top:12px">
-    <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin-bottom:6px">Clean up existing records</div>
-    <div style="font-size:0.74rem;color:var(--c-text2);margin-bottom:10px">${variants.length} RM name(s) in your records don't match the list above (usually spelling variants). Map each to the right RM, then apply — this rewrites every matching showroom, partner, lead and property (and sets the RM's zone where defined). Save your RM list first so the targets appear below.</div>
-    ${variants.map(v=>`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span style="flex:1;min-width:140px;font-size:0.8rem"><code>${esc(v)}</code> <span style="color:var(--c-text3)">· ${_rmDataCount(v)} record${_rmDataCount(v)!==1?'s':''}</span></span><i class="fas fa-arrow-right" style="color:var(--c-text3);font-size:0.7rem"></i><select class="form-select rm-map" data-v="${esc(v)}" style="max-width:210px"><option value="">— keep as is —</option>${canon.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>`).join('')}
-    <button class="btn btn-outline btn-sm" id="rmApplyRemapBtn" style="margin-top:6px"${canon.length?'':' disabled'}><i class="fas fa-wand-magic-sparkles"></i> Apply remap to records</button>
-  </div>`;
-  document.getElementById('rmApplyRemapBtn')?.addEventListener('click',applyRMRemap);
-}
-async function applyRMRemap(){
+async function saveRMList(){
   if(!isAdmin())return;
-  const maps=[...document.querySelectorAll('.rm-map')].map(s=>({from:s.dataset.v,to:s.value})).filter(m=>m.to&&m.to!==m.from);
-  if(!maps.length){toast('Choose at least one mapping','warning');return;}
-  const total=maps.reduce((a,m)=>a+_rmDataCount(m.from),0);
-  if(!await showConfirm(`Update ${total} record(s) across all sections, rewriting their RM to the chosen names? This can't be undone in bulk.`,'Apply RM remap'))return;
-  const batch=writeBatch(db);let n=0;
-  const apply=(arr,coll)=>arr.forEach(r=>{const m=maps.find(x=>x.from===String(r.rm||'').trim());if(m){const upd={rm:m.to,updatedAt:serverTimestamp()};const z=rmZone(m.to);if(z)upd.zone=z;batch.update(doc(db,coll,r.id),upd);n++;}});
-  apply(S.showrooms,'showrooms');apply(S.dealers,'dealerOnboarding');apply(S.pipeline,'pipeline');apply(S.properties,'properties');
-  try{await batch.commit();toast(`Remapped ${n} record(s)`,'success');renderSettings();}catch(e){toast('Remap failed: '+e.message,'error');}
+  /* canonical list — dedupe by trimmed name (first zone wins, later non-empty zone fills a blank) */
+  const seen=new Map();
+  _rmDraft.forEach(r=>{const nm=(r.name||'').trim();if(!nm)return;const k=nm.toLowerCase();if(!seen.has(k))seen.set(k,{name:nm,zone:r.zone||''});else if(!seen.get(k).zone&&r.zone)seen.get(k).zone=r.zone;});
+  const canonical=[...seen.values()];
+  if(!canonical.length){if(!await showConfirm('Save an empty RM list? The dropdowns will have no preset names.','Save RM list'))return;}
+  /* record renames: any row whose original record value differs from its (edited) name */
+  const remaps={};_rmDraft.forEach(r=>{const nm=(r.name||'').trim();if(r._orig&&nm&&r._orig!==nm)remaps[r._orig]=nm;});
+  const keys=Object.keys(remaps);
+  const affected=keys.reduce((a,o)=>a+_rmDataCount(o),0);
+  if(keys.length&&!await showConfirm(`Save the RM list and update ${affected} record(s) whose RM name changed? Records will be rewritten to the corrected names.`,'Save & apply'))return;
+  CFG.rms=canonical;
+  if(keys.length){
+    const batch=writeBatch(db);let n=0;
+    const apply=(arr,coll)=>arr.forEach(rec=>{const o=String(rec.rm||'').trim();if(remaps[o]){const upd={rm:remaps[o],updatedAt:serverTimestamp()};const z=rmZone(remaps[o]);if(z)upd.zone=z;batch.update(doc(db,coll,rec.id),upd);n++;}});
+    apply(S.showrooms,'showrooms');apply(S.dealers,'dealerOnboarding');apply(S.pipeline,'pipeline');apply(S.properties,'properties');
+    try{await batch.commit();if(n)toast(`Updated ${n} record(s)`,'success');}catch(e){toast('Record update failed: '+e.message,'error');}
+  }
+  await saveConfig();
 }
 
 /* ── SETTINGS VIEW ── */
@@ -2465,14 +2471,13 @@ function renderSettings(){
       <div id="dqPanel">${renderDataQuality()}</div>
     </div>
     ${isAdmin()?`<div class="setting-card" style="grid-column:1/-1">
-      <h3><i class="fas fa-user-tie"></i> Field Reps (RM) <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— this list feeds the RM dropdown on every form; each RM can carry a zone that auto-fills</span></h3>
+      <h3><i class="fas fa-user-tie"></i> Field Reps (RM) <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— this list feeds the RM dropdown on every form; edit names to fix spellings, set a zone to auto-fill</span></h3>
       <div id="rmManagerBody"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
         <button class="btn btn-outline btn-sm" id="rmAddBtn"><i class="fas fa-plus"></i> Add RM</button>
-        <button class="btn btn-outline btn-sm" id="rmImportBtn"><i class="fas fa-file-import"></i> Import names from records</button>
-        <button class="btn btn-primary btn-sm" id="rmSaveBtn"><i class="fas fa-save"></i> Save RM list</button>
+        <button class="btn btn-outline btn-sm" id="rmImportBtn"><i class="fas fa-file-import"></i> Re-import from records</button>
+        <button class="btn btn-primary btn-sm" id="rmSaveBtn"><i class="fas fa-save"></i> Save &amp; apply</button>
       </div>
-      <div id="rmRemapWrap" style="margin-top:16px"></div>
     </div>`:''}
     ${isAdmin()?`<div class="setting-card" style="grid-column:1/-1">
       <h3><i class="fas fa-sliders"></i> SLA &amp; Thresholds <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— tune the KPI without code; saved to Firestore for everyone</span></h3>
@@ -2513,15 +2518,11 @@ function renderSettings(){
   document.getElementById('csvImportInput')?.addEventListener('change',handleCSVImport);
   /* RM manager */
   if(isAdmin()){
-    _rmDraft=JSON.parse(JSON.stringify(CFG.rms||[]));
+    seedRMDraft();
     renderRMManager();
-    document.getElementById('rmAddBtn')?.addEventListener('click',()=>{_rmDraft.push({name:'',zone:''});renderRMManager();});
-    document.getElementById('rmImportBtn')?.addEventListener('click',()=>{const have=_rmDraft.map(r=>(r.name||'').trim());let added=0;allRmInData().forEach(v=>{if(!have.includes(v)){_rmDraft.push({name:v,zone:''});added++;}});renderRMManager();toast(added?`Imported ${added} name(s) — review and save`:'No new names to import','info');});
-    document.getElementById('rmSaveBtn')?.addEventListener('click',()=>{
-      const seen=new Set();const clean=[];
-      _rmDraft.forEach(r=>{const nm=(r.name||'').trim();if(!nm)return;const k=nm.toLowerCase();if(seen.has(k))return;seen.add(k);clean.push({name:nm,zone:r.zone||''});});
-      CFG.rms=clean;saveConfig();
-    });
+    document.getElementById('rmAddBtn')?.addEventListener('click',()=>{_rmDraft.push({name:'',zone:'',_orig:null});renderRMManager();});
+    document.getElementById('rmImportBtn')?.addEventListener('click',()=>{const have=_rmDraft.map(r=>(r._orig||r.name||'').trim());let added=0;allRmInData().forEach(v=>{if(!have.includes(v)){_rmDraft.push({name:v,zone:guessZone(v),_orig:v});added++;}});renderRMManager();toast(added?`Added ${added} name(s) from records`:'All record names already listed','info');});
+    document.getElementById('rmSaveBtn')?.addEventListener('click',saveRMList);
   }
   document.getElementById('cfgSaveBtn')?.addEventListener('click',()=>{
     const num=(id,fallback)=>{const v=parseInt(document.getElementById(id)?.value);return isNaN(v)?fallback:v;};
