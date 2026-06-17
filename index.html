@@ -420,7 +420,7 @@ canvas{max-height:220px;}
 .toggle.on{background:var(--c-blue);}
 .toggle.on::after{left:21px;}
 .imp-hero{background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.08));border:1px solid var(--c-border2);border-radius:var(--r-2xl);padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden;}
-.imp-hero::after{content:'v7.0';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
+.imp-hero::after{content:'v8.0';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
 .imp-hero h2{font-size:1.35rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;}
 .imp-hero p{font-size:0.82rem;color:var(--c-text2);max-width:640px;line-height:1.6;}
 .imp-stats{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;}
@@ -548,7 +548,7 @@ canvas{max-height:220px;}
   <div class="sidebar-top">
     <div class="brand">
       <div class="brand-icon"><img src="https://www.aiswindows.com/assets/images/ais-windows-logo.svg" alt="AIS"></div>
-      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v7.0</div></div>
+      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v8.0</div></div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -559,6 +559,9 @@ canvas{max-height:220px;}
     </button>
     <button class="nav-btn" data-view="insights" aria-label="Insights — Analytics">
       <i class="fas fa-chart-line"></i><span>Insights</span>
+    </button>
+    <button class="nav-btn" data-view="zones" aria-label="Zones and RM Scorecards">
+      <i class="fas fa-sitemap"></i><span>Zones &amp; RMs</span>
     </button>
     <div class="nav-group">Execution</div>
     <button class="nav-btn" data-view="showrooms" aria-label="Showrooms">
@@ -713,12 +716,14 @@ canvas{max-height:220px;}
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">RM *</label><input type="text" id="sr-rm" class="form-input"></div>
-        <div class="form-group"><label class="form-label">Start Date *</label><input type="date" id="sr-start" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Zone</label><select id="sr-zone" class="form-select"></select></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Committed Launch <span style="font-size:0.62rem;color:var(--c-text3)">(promised date)</span></label><input type="date" id="sr-commit" class="form-input"></div>
-        <div class="form-group"><label class="form-label">Notes</label><input type="text" id="sr-note" class="form-input" placeholder="Optional"></div>
+        <div class="form-group"><label class="form-label">Start Date *</label><input type="date" id="sr-start" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Committed Launch <span style="font-size:0.62rem;color:var(--c-text3)">(promised)</span></label><input type="date" id="sr-commit" class="form-input"></div>
       </div>
+      <div class="form-group"><label class="form-label">Plan Template <span style="font-size:0.62rem;color:var(--c-text3)">(SLA curve)</span></label><select id="sr-template" class="form-select"></select></div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" id="sr-note" class="form-input" placeholder="Optional"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Latitude</label><input type="number" id="sr-lat" class="form-input" placeholder="28.6139" step="any"></div>
         <div class="form-group"><label class="form-label">Longitude</label><input type="number" id="sr-lng" class="form-input" placeholder="77.2090" step="any"></div>
@@ -744,6 +749,10 @@ canvas{max-height:220px;}
         <div class="form-group"><label class="form-label">RM *</label><input type="text" id="dl-rm" class="form-input"></div>
         <div class="form-group"><label class="form-label">Start Date *</label><input type="date" id="dl-start" class="form-input"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Zone</label><select id="dl-zone" class="form-select"></select></div>
+        <div class="form-group"></div>
+      </div>
     <div class="form-row">
         <div class="form-group"><label class="form-label">Latitude <span style="font-size:0.62rem;color:var(--c-text3)">(optional — for map)</span></label><input type="number" id="dl-lat" class="form-input" step="any" placeholder="e.g. 28.6139"></div>
         <div class="form-group"><label class="form-label">Longitude <span style="font-size:0.62rem;color:var(--c-text3)">(optional — for map)</span></label><input type="number" id="dl-lng" class="form-input" step="any" placeholder="e.g. 77.2090"></div>
@@ -768,6 +777,10 @@ canvas{max-height:220px;}
       <div class="form-row">
         <div class="form-group"><label class="form-label">RM *</label><input type="text" id="pl-rm" class="form-input"></div>
         <div class="form-group"><label class="form-label">Stage</label><select id="pl-stage" class="form-select"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Zone</label><select id="pl-zone" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label">Follow-up by <span style="font-size:0.62rem;color:var(--c-text3)">(reminder)</span></label><input type="date" id="pl-followup" class="form-input"></div>
       </div>
       <div class="form-group"><label class="form-label">Notes</label><textarea id="pl-notes" class="form-textarea" rows="2"></textarea></div>
     </div>
@@ -845,10 +858,12 @@ canvas{max-height:220px;}
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{initializeFirestore,persistentLocalCache,persistentMultipleTabManager,
   getFirestore,
-  collection,doc,deleteDoc,onSnapshot,addDoc,updateDoc,getDoc,serverTimestamp,writeBatch}
+  collection,doc,deleteDoc,onSnapshot,addDoc,updateDoc,setDoc,getDoc,serverTimestamp,writeBatch}
   from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import{getAuth,signInWithEmailAndPassword,signInAnonymously,onAuthStateChanged,signOut}
   from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{initializeAppCheck,ReCaptchaV3Provider}
+  from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
 /* ── CONFIG ── */
 const FBCFG={apiKey:"AIzaSyDav3rI7fTr8KrXYxvnz5LB82CgjRq4v20",authDomain:"ais-showroom-dashboard.firebaseapp.com",projectId:"ais-showroom-dashboard",storageBucket:"ais-showroom-dashboard.firebasestorage.app",messagingSenderId:"175667492150",appId:"1:175667492150:web:cb124eb267b4689e6a2f97"};
@@ -861,6 +876,9 @@ try{
   db=getFirestore(app);
 }
 const auth=getAuth(app);
+/* App Check — paste a reCAPTCHA v3 site key (Firebase console → App Check) to harden the public config against abuse. Empty = disabled, app runs normally. */
+const APPCHECK_SITE_KEY='';
+if(APPCHECK_SITE_KEY){try{initializeAppCheck(app,{provider:new ReCaptchaV3Provider(APPCHECK_SITE_KEY),isTokenAutoRefreshEnabled:true});}catch(e){console.warn('App Check init failed:',e);}}
 
 /* ── CONSTANTS ── */
 const PHASES=[
@@ -875,8 +893,16 @@ const PHASES=[
   {id:'launch',name:'Final Handover / Launch',days:90}
 ];
 /* IMPROVEMENT: planned cumulative day -> per-phase DURATION (basis of duration-weighted KPI) */
-const TOTAL_PLAN=PHASES[PHASES.length-1].days; /* 90 */
+const TOTAL_PLAN=PHASES[PHASES.length-1].days; /* 90 (default template) */
 function planDur(i){return i===0?PHASES[0].days:PHASES[i].days-PHASES[i-1].days;}
+/* CONFIG-AS-DATA: tunable settings loaded from Firestore config/app at startup (admins edit in Settings).
+   Per-showroom plan templates let a metro flagship and a small franchise be measured against different curves. */
+const DEFAULT_TEMPLATE={id:'standard',name:'Standard (90-day)',phases:PHASES.map(p=>p.days)};
+let CFG={followupDays:21,templates:[DEFAULT_TEMPLATE,{id:'fast',name:'Compact (60-day)',phases:[3,8,11,22,36,40,46,54,60]},{id:'flagship',name:'Flagship (120-day)',phases:[7,16,21,42,68,75,88,106,120]}]};
+function planArr(s){const t=(s&&s.templateId&&Array.isArray(CFG.templates))?CFG.templates.find(x=>x.id===s.templateId):null;return(t&&Array.isArray(t.phases)&&t.phases.length===PHASES.length)?t.phases:PHASES.map(p=>p.days);}
+function planTotal(s){const a=planArr(s);return a[a.length-1];}
+function planDurS(s,i){const a=planArr(s);return i===0?a[0]:a[i]-a[i-1];}
+function templateName(s){const t=(s&&s.templateId&&Array.isArray(CFG.templates))?CFG.templates.find(x=>x.id===s.templateId):null;return t?t.name:DEFAULT_TEMPLATE.name;}
 /* default accountable owner per phase — separates AIS delays from dealer/vendor delays */
 const PHASE_OWNER_DEFAULT={dim:'Dealer',cad:'AIS',plan:'AIS',civil:'Dealer',interior:'Dealer',brand:'AIS',delivery:'AIS',window:'AIS',launch:'AIS'};
 const PHASE_OWNERS=['AIS','Dealer','Vendor'];
@@ -903,14 +929,36 @@ const STAGE_CATS=[
   {id:'handover',name:'Handover',phases:['launch'],color:'#10B981',icon:'fa-key'}
 ];
 const DEALER_STAGES=['Interested','Shortlisted','CFT Selected','Documentation','Onboarded','Shortlist-reject','CFT-Reject'];
-const STAGE_TARGETS={Interested:0,Shortlisted:3,'CFT Selected':8,Documentation:15,Onboarded:22,'Shortlist-reject':0,'CFT-Reject':0};
+/* AIS channel zones — used by the Zones & RM scorecards */
+const ZONES=['DelhiNCR','South','East','West','RON'];
+let STAGE_TARGETS={Interested:0,Shortlisted:3,'CFT Selected':8,Documentation:15,Onboarded:22,'Shortlist-reject':0,'CFT-Reject':0};
 const DOC_KEYS=['securityDeposit','crmCharges','agreement','gst','pan','aadhaar','bankDetails','cheque','passportPhotos','companyRegistration','spaceFinalized'];
 const DOC_LABELS={securityDeposit:'Security Deposit',crmCharges:'CRM Charges',agreement:'Agreement',gst:'GST Certificate',pan:'PAN Card',aadhaar:'Aadhaar',bankDetails:'Bank Details',cheque:'Cheque',passportPhotos:'Passport Photos',companyRegistration:'Company Registration',spaceFinalized:'Space Finalized'};
 const PL_STAGES=['Lead Generated','Discussion','Site Shared','Site Visit','Financial Evaluation','Approval Pending','Documentation','Agreement Signed','Property Freeze','Design Stage','Live'];
 const PL_COLORS={'Lead Generated':'#6B7280','Discussion':'#3B82F6','Site Shared':'#8B5CF6','Site Visit':'#EC4899','Financial Evaluation':'#F97316','Approval Pending':'#EF4444','Documentation':'#F59E0B','Agreement Signed':'#10B981','Property Freeze':'#06B6D4','Design Stage':'#A78BFA','Live':'#10B981'};
 const SR_IDEAL=90,DL_IDEAL=22,PAGE=16;
-/* predictive risk thresholds (days) — overdue OR projected miss can trigger status */
-const RISK={critOverdue:10,warnOverdue:6,critProjMiss:14,warnProjMiss:7};
+/* predictive risk thresholds (days) — overdue OR projected miss can trigger status. Mutable: overridden by config/app. */
+let RISK={critOverdue:10,warnOverdue:6,critProjMiss:14,warnProjMiss:7};
+/* load tunables from Firestore (falls back silently to defaults if absent/offline) */
+async function loadConfig(){
+  try{
+    const snap=await getDoc(doc(db,'config','app'));
+    if(snap.exists()){
+      const c=snap.data()||{};
+      if(c.risk)RISK={...RISK,...c.risk};
+      if(c.stageTargets)STAGE_TARGETS={...STAGE_TARGETS,...c.stageTargets};
+      if(typeof c.followupDays==='number')CFG.followupDays=c.followupDays;
+      if(Array.isArray(c.templates)&&c.templates.length)CFG.templates=c.templates;
+    }
+  }catch(e){console.warn('config load failed (using defaults):',e);}
+}
+async function saveConfig(){
+  if(!isAdmin())return;
+  try{
+    await setDoc(doc(db,'config','app'),{risk:RISK,stageTargets:STAGE_TARGETS,followupDays:CFG.followupDays,templates:CFG.templates,updatedAt:serverTimestamp(),updatedBy:email||'admin'},{merge:true});
+    toast('Settings saved — recalculating','success');renderView();
+  }catch(e){toast('Save failed: '+e.message,'error');}
+}
 
 /* ── STATE ── */
 const S={showrooms:[],dealers:[],pipeline:[],properties:[]};
@@ -1052,6 +1100,16 @@ function renderNotifs(){
   l.querySelectorAll('.notif-item').forEach(it=>it.addEventListener('click',()=>{const nid=parseFloat(it.dataset.nid);const n=notifs.find(x=>x.id===nid);if(n){n.read=true;renderNotifs();if(n.etype==='showroom'&&n.eid)openSRDetail(n.eid);else if(n.etype==='dealer'&&n.eid)openDLDetail(n.eid);}}));
 }
 
+/* ── DATA NORMALIZATION ── insulate the UI from dirty/legacy/partial documents.
+   Every doc is coerced to a known shape at the load boundary so renders can't crash on a bad record. */
+function asObj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
+function asArr(v){return Array.isArray(v)?v:[];}
+function normSR(d){return{...d,name:d.name||'(unnamed showroom)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',startDate:d.startDate||'',committedDate:d.committedDate||'',templateId:d.templateId||'',data:asObj(d.data),changeLog:asArr(d.changeLog).length?asArr(d.changeLog):asArr(d.history)};}
+function normDL(d){return{...d,name:d.name||'(unnamed partner)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',currentStage:d.currentStage||'Interested',documents:asObj(d.documents),docLinks:asObj(d.docLinks),stageHistory:asArr(d.stageHistory).length?asArr(d.stageHistory):asArr(d.history)};}
+function normPL(d){return{...d,name:d.name||'(unnamed lead)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',stage:d.stage||'Lead Generated',followupDate:d.followupDate||'',changeLog:asArr(d.changeLog)};}
+function normProp(d){return{...d,name:d.name||'(unnamed property)',city:d.city||'',rm:d.rm||'',status:d.status||'Shortlisted',changeLog:asArr(d.changeLog)};}
+const NORM={showrooms:normSR,dealers:normDL,pipeline:normPL,properties:normProp};
+
 /* ── BUSINESS LOGIC ── */
 function srStage(s){
   if(!s||isSRDone(s))return{stage:STAGE_CATS[5],idx:5,name:'Completed'};
@@ -1063,8 +1121,8 @@ function srStage(s){
 function srProgressWeighted(s){
   if(isSRDone(s))return 100;
   let earned=0;
-  PHASES.forEach((p,i)=>{if(s.data?.[p.id]?.actualDate)earned+=planDur(i);});
-  return Math.round(earned/TOTAL_PLAN*100);
+  PHASES.forEach((p,i)=>{if(s.data?.[p.id]?.actualDate)earned+=planDurS(s,i);});
+  return Math.round(earned/planTotal(s)*100);
 }
 /* memoized wrapper — dedupes within a render pass; cache reset each render for freshness */
 function srStats(s){
@@ -1076,10 +1134,10 @@ function srStats(s){
 function _computeSrStats(s){
   if(isSRDone(s))return{pct:100,pctW:100,avg:0,total:0,max:0,delayed:[],done:PHASES.length,blocking:null,cascading:0};
   if(!s?.startDate)return{pct:0,pctW:0,avg:0,total:0,max:0,delayed:[],done:0,blocking:null,cascading:0};
-  const start=pd(s.startDate),today=today0();
+  const start=pd(s.startDate),today=today0();const plan=planArr(s);
   let done=0,total=0,cnt=0,max=0;const delayed=[];
   PHASES.forEach((p,i)=>{
-    const tgt=new Date(start);tgt.setDate(start.getDate()+p.days);
+    const tgt=new Date(start);tgt.setDate(start.getDate()+plan[i]);
     const act=s.data?.[p.id]?.actualDate?pd(s.data[p.id].actualDate):null;
     if(act){done++;const diff=Math.round((act-tgt)/86400000);if(diff>0){total+=diff;cnt++;max=Math.max(max,diff);delayed.push({phase:p.name,id:p.id,idx:i,days:diff,done:true});}}
     else{const diff=Math.round((today-tgt)/86400000);if(diff>0){total+=diff;cnt++;max=Math.max(max,diff);delayed.push({phase:p.name,id:p.id,idx:i,days:diff,done:false});}}
@@ -1093,7 +1151,7 @@ function _computeSrStats(s){
   return{pct:Math.round((done/PHASES.length)*100),pctW:srProgressWeighted(s),avg:cnt?Math.round(total/cnt):0,total,max,delayed,done,blocking,cascading};
 }
 function srDays(s){
-  const id=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):SR_IDEAL;
+  const id=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):planTotal(s);
   if(!s?.startDate)return{ideal:id,actual:0,forecast:id,delay:0};
   const start=pd(s.startDate);
   if(isSRDone(s)){const ld=s.data?.launch?.actualDate?pd(s.data.launch.actualDate):today0();const actual=Math.max(0,dayDiff(start,ld));return{ideal:id,actual,forecast:actual,delay:Math.max(0,actual-id)};}
@@ -1112,7 +1170,7 @@ function dlTimeline(d){
 function histOverrun(){
   if(_histOverrunCache!==null)return _histOverrunCache;
   const hist=S.showrooms.filter(x=>isSRDone(x)&&x.startDate&&x.data?.launch?.actualDate);
-  const overruns=hist.map(h=>Math.max(0,dayDiff(pd(h.startDate),pd(h.data.launch.actualDate))-TOTAL_PLAN));
+  const overruns=hist.map(h=>Math.max(0,dayDiff(pd(h.startDate),pd(h.data.launch.actualDate))-planTotal(h)));
   _histOverrunCache=overruns.length?avg(overruns):15;
   return _histOverrunCache;
 }
@@ -1126,7 +1184,7 @@ function forecastSR(s){
   const p50=Math.round(actual/(pctW/100));
   const avgOverrun=histOverrun();
   const p75=p50+Math.round(avgOverrun*0.7);
-  const earnedPlanDays=pctW/100*TOTAL_PLAN;
+  const earnedPlanDays=pctW/100*planTotal(s);
   const spi=actual>0?earnedPlanDays/actual:1; /* <1 behind, >1 ahead */
   const progressConf=Math.min(60,pctW*0.6);
   const spiConf=Math.max(0,Math.min(35,35-Math.abs(1-spi)*70));
@@ -1134,11 +1192,11 @@ function forecastSR(s){
   const completionDate=new Date(start);completionDate.setDate(start.getDate()+p50);
   return{p50,p75,confidence,spi,completionDate:completionDate.toISOString().slice(0,10)};
 }
-/* IMPROVEMENT: explicit target = committed date if set, else the 90d template */
+/* IMPROVEMENT: explicit target = committed date if set, else the showroom's plan-template length */
 function srTargetDate(s){
   if(!s?.startDate)return null;
   if(s.committedDate)return pd(s.committedDate);
-  const d=pd(s.startDate);d.setDate(d.getDate()+TOTAL_PLAN);return d;
+  const d=pd(s.startDate);d.setDate(d.getDate()+planTotal(s));return d;
 }
 /* IMPROVEMENT: PREDICTIVE risk — flags BEFORE a phase hits 10d overdue, by projecting
    the forecast against the committed/target date. */
@@ -1161,9 +1219,9 @@ function phaseCycles(s){
   let prev=start;
   return PHASES.map((p,i)=>{
     const ad=s.data?.[p.id]?.actualDate?pd(s.data[p.id].actualDate):null;
-    if(!ad)return{phase:p.name,id:p.id,plan:planDur(i),actual:null,variance:null};
+    if(!ad)return{phase:p.name,id:p.id,plan:planDurS(s,i),actual:null,variance:null};
     const actual=Math.round((ad-prev)/86400000);prev=ad;
-    return{phase:p.name,id:p.id,plan:planDur(i),actual,variance:actual-planDur(i)};
+    return{phase:p.name,id:p.id,plan:planDurS(s,i),actual,variance:actual-planDurS(s,i)};
   });
 }
 function buildActions(){
@@ -1198,10 +1256,18 @@ function buildActions(){
       actions.push({priority:'info',type:'dl-docs',title:`${d.name} — Almost Complete`,desc:`${dp}% docs done. One final push for onboarding.`,why:`Docs ≥80% — near completion`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:dp+'% docs',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Checklist',fn:()=>openDLDetail(d.id)},{label:'WhatsApp CP',fn:()=>window.open(waLink(d.mobileNumber,`Hi ${d.name}, just ${100-dp}% more docs needed to complete your AIS partnership onboarding!`),'_blank'),cls:'wa-btn'}]});
     }
   });
+  /* Follow-ups due (explicit reminder dates) */
+  S.pipeline.forEach(p=>{
+    if(!p.followupDate||p.stage==='Live')return;
+    const due=dayDiff(today0(),p.followupDate); /* <=0 means due/overdue */
+    if(due<=0){
+      actions.push({priority:'warning',type:'pl-followup',title:`Follow-up due: ${p.name}`,desc:`Follow-up was set for ${fmtDateShort(p.followupDate)}${due<0?` (${-due}d overdue)`:' (today)'}.`,why:'Reminder date reached',entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:due<0?(-due)+'d overdue':'today',c:'phase'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'WhatsApp',fn:()=>window.open(waLink(p.mobile,`Hi ${p.contact||p.name}, following up regarding the AIS opportunity in ${p.city}.`),'_blank'),cls:'wa-btn'}]});
+    }
+  });
   /* Old leads in pipeline */
   S.pipeline.forEach(p=>{
     const age=p.createdAt?Math.max(0,dayDiff(pd(p.createdAt),today0())):0;
-    if(age>21&&p.stage!=='Live'){
+    if(age>CFG.followupDays&&p.stage!=='Live'&&!p.followupDate){
       actions.push({priority:'warning',type:'pl-stale',title:`Pipeline Lead: ${p.name}`,desc:`In "${p.stage}" for ${age} days. Follow up required.`,why:`Age ${age}d > 21d follow-up threshold`,entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:age+'d old',c:'age'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'WhatsApp Lead',fn:()=>window.open(waLink(p.mobile,`Hi ${p.contact||p.name}, following up on the AIS expansion opportunity for ${p.city}. Are you still interested?`),'_blank'),cls:'wa-btn'}]});
     }
   });
@@ -1216,7 +1282,7 @@ function setView(v){
   view=v;
   document.querySelectorAll('.nav-btn,[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===v);b.setAttribute('aria-current',b.dataset.view===v?'page':'false');});
   if(v==='map'){if(leafletMap){try{leafletMap.remove();}catch(e){}}leafletMap=null;}
-  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',settings:'Settings',improvements:"What's New — v7.0"};
+  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',zones:'Zones & RM Scorecards',settings:'Settings',improvements:"What's New — v8.0"};
   const el=document.getElementById('pageTitle');if(el)el.textContent=titles[v]||v;
   document.title=`${titles[v]||v} | AIS Expansion OS`;
   const addBtn=document.getElementById('addBtn');
@@ -1228,15 +1294,23 @@ function renderView(){
   /* IMPROVEMENT: reset memo caches each render — within-render dedup + freshness after edits */
   _statsCache=new WeakMap();_histOverrunCache=null;
   const v=view;
-  if(v==='today')renderToday();
-  else if(v==='showrooms')renderShowrooms();
-  else if(v==='partners')renderPartners();
-  else if(v==='pipeline')renderPipeline();
-  else if(v==='map')renderMap();
-  else if(v==='properties')renderProperties();
-  else if(v==='insights')renderInsights();
-  else if(v==='settings')renderSettings();
-  else if(v==='improvements')renderImprovements();
+  try{
+    if(v==='today')renderToday();
+    else if(v==='showrooms')renderShowrooms();
+    else if(v==='partners')renderPartners();
+    else if(v==='pipeline')renderPipeline();
+    else if(v==='map')renderMap();
+    else if(v==='properties')renderProperties();
+    else if(v==='insights')renderInsights();
+    else if(v==='zones')renderZones();
+    else if(v==='settings')renderSettings();
+    else if(v==='improvements')renderImprovements();
+  }catch(e){
+    console.error('render error ['+v+']:',e);
+    const c=document.getElementById('content');
+    if(c)c.innerHTML=`<div class="empty-state"><i class="fas fa-triangle-exclamation" style="color:var(--c-amber)"></i><h3>Something went wrong rendering this view</h3><p>${esc(e.message||'Unexpected error')}</p><button class="btn btn-primary" onclick="setView('today')"><i class="fas fa-house"></i> Back to Today</button></div>`;
+    toast('Render error — see console','error');
+  }
 }
 
 /* ── TODAY VIEW ── */
@@ -1253,6 +1327,7 @@ function renderToday(){
     <div class="today-date">${days[today.getDay()]}, ${today.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
     <div class="today-title">${critSR+critDL>0?`⚠️ ${critSR+critDL} item${critSR+critDL>1?'s':''} need attention`:'✅ Operations running smoothly'}</div>
     <div class="today-sub">${actions.length} action${actions.length!==1?'s':''} in your feed today</div>
+    <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="generateWeeklyReport()"><i class="fas fa-file-lines"></i> Weekly Report</button>
   </div>
   <div class="today-kpis">
     <div class="tkpi" style="--tkpi-c:var(--c-red)" onclick="setView('showrooms')">
@@ -1418,7 +1493,22 @@ let _bulkSel=new Set();
 function clearBulk(){_bulkSel.clear();renderView();}
 function toggleBulkItem(id){if(_bulkSel.has(id))_bulkSel.delete(id);else _bulkSel.add(id);_updateBulkBar();document.querySelectorAll(`.ecard[data-id="${id}"]`).forEach(el=>el.classList.toggle('picked',_bulkSel.has(id)));}
 function _updateBulkBar(){const bar=document.getElementById('bulkBar');if(!bar)return;const n=_bulkSel.size;bar.classList.toggle('on',n>0);const c=document.getElementById('bulkCount');if(c)c.textContent=`${n} selected`;}
-function _bulkBarHTML(){return`<div class="bulk-bar" id="bulkBar"><span class="bulk-count" id="bulkCount">0 selected</span><button class="btn btn-outline btn-sm" onclick="bulkExportCSV()"><i class="fas fa-file-csv"></i> Export</button><button class="btn btn-outline btn-sm" onclick="bulkCopyPhones()"><i class="fas fa-phone"></i> Copy Phones</button><button class="btn btn-outline btn-sm" onclick="bulkCopyNames()"><i class="fas fa-copy"></i> Copy Names</button><button class="btn btn-ghost btn-sm" onclick="clearBulk()">Clear</button></div>`;}
+function _bulkBarHTML(){return`<div class="bulk-bar" id="bulkBar"><span class="bulk-count" id="bulkCount">0 selected</span><button class="btn btn-outline btn-sm" onclick="bulkExportCSV()"><i class="fas fa-file-csv"></i> Export</button><button class="btn btn-outline btn-sm" onclick="bulkCopyPhones()"><i class="fas fa-phone"></i> Phones</button><button class="btn btn-outline btn-sm" onclick="bulkCopyNames()"><i class="fas fa-copy"></i> Names</button>${isAdmin()?`<button class="btn btn-outline btn-sm" onclick="bulkReassignRM()"><i class="fas fa-user-tie"></i> Reassign RM</button><button class="btn btn-outline btn-sm" onclick="bulkReassignZone()"><i class="fas fa-location-dot"></i> Set Zone</button>`:''}<button class="btn btn-ghost btn-sm" onclick="clearBulk()">Clear</button></div>`;}
+function _collOf(it){return S.showrooms.includes(it)?'showrooms':S.dealers.includes(it)?'dealerOnboarding':S.pipeline.includes(it)?'pipeline':'properties';}
+function bulkReassignRM(){
+  if(!isAdmin()){toast('Admins only','warning');return;}
+  const items=_bulkItems();if(!items.length)return;
+  const rm=prompt(`Reassign ${items.length} selected record(s) to which RM?`);if(rm===null||!rm.trim())return;
+  const batch=writeBatch(db);items.forEach(it=>batch.update(doc(db,_collOf(it),it.id),{rm:rm.trim(),updatedAt:serverTimestamp()}));
+  batch.commit().then(()=>{toast(`${items.length} reassigned to ${rm.trim()}`,'success');clearBulk();}).catch(e=>toast('Failed: '+e.message,'error'));
+}
+function bulkReassignZone(){
+  if(!isAdmin()){toast('Admins only','warning');return;}
+  const items=_bulkItems();if(!items.length)return;
+  const z=prompt(`Set zone for ${items.length} selected record(s).\nSuggested: ${ZONES.join(', ')}`);if(z===null)return;
+  const batch=writeBatch(db);items.forEach(it=>batch.update(doc(db,_collOf(it),it.id),{zone:z.trim(),updatedAt:serverTimestamp()}));
+  batch.commit().then(()=>{toast(`Zone set for ${items.length} record(s)`,'success');clearBulk();}).catch(e=>toast('Failed: '+e.message,'error'));
+}
 function _bulkItems(){const all=[...S.showrooms,...S.dealers,...S.pipeline,...S.properties];return[..._bulkSel].map(id=>all.find(x=>x.id===id)).filter(Boolean);}
 function bulkExportCSV(){const items=_bulkItems();if(!items.length)return;const rows=[['Name','City','RM','Mobile']].concat(items.map(i=>[i.name||'',i.city||'',i.rm||'',i.mobileNumber||i.mobile||'']));downloadCSV('ais_selection.csv',rows);toast(`${items.length} rows exported`,'success');}
 function bulkCopyPhones(){const items=_bulkItems();const ph=items.map(i=>i.mobileNumber||i.mobile).filter(Boolean).join(', ');navigator.clipboard?.writeText(ph);toast('Phones copied','success');}
@@ -1510,7 +1600,7 @@ function buildSRCard(s){
     </div>`;
   }
   const st=srStats(s),stage=srStage(s),d=srDays(s),fc=forecastSR(s),lvl=srLevel(s);
-  const targetDays=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):TOTAL_PLAN;
+  const targetDays=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):planTotal(s);
   const pcls=lvl==='critical'?'red':lvl==='warning'?'amber':'green';
   const cardCls=lvl==='critical'?' crit':lvl==='warning'?' warn':'';
   const chip=lvl==='critical'?'<span class="chip chip-crit">Critical</span>':lvl==='warning'?'<span class="chip chip-warn">At Risk</span>':'<span class="chip chip-ok">On Track</span>';
@@ -1552,7 +1642,7 @@ function buildGantt(s){
   const fc=forecastSR(s);const commitDays=s.committedDate?dayDiff(s.startDate,s.committedDate):null;
   let latestActual=0;PHASES.forEach(p=>{const a=s.data?.[p.id]?.actualDate;if(a)latestActual=Math.max(latestActual,dayDiff(start,a));});
   const todayD=Math.max(0,dayDiff(start,today0()));
-  const maxDay=Math.max(TOTAL_PLAN,commitDays||0,latestActual,fc?fc.p50:0,todayD)+5;
+  const maxDay=Math.max(planTotal(s),commitDays||0,latestActual,fc?fc.p50:0,todayD)+5;
   const rowH=24,padL=146,padT=24,w=720,plotW=w-padL-16,h=padT+PHASES.length*rowH+12;
   const x=day=>padL+(day/maxDay)*plotW;
   let svg=`<svg class="gantt-svg" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" xmlns="http://www.w3.org/2000/svg">`;
@@ -1560,7 +1650,7 @@ function buildGantt(s){
   for(let d=0;d<=maxDay;d+=15){svg+=`<line x1="${x(d)}" y1="${padT-4}" x2="${x(d)}" y2="${h-8}" stroke="var(--c-border)" stroke-width="1"/><text class="gantt-header-label" x="${x(d)}" y="${padT-8}" text-anchor="middle">${d}d</text>`;}
   let prevActual=0;
   PHASES.forEach((p,i)=>{
-    const y=padT+i*rowH+4;const pStart=i===0?0:PHASES[i-1].days,pEnd=p.days;
+    const y=padT+i*rowH+4;const _pl=planArr(s),pStart=i===0?0:_pl[i-1],pEnd=_pl[i];
     const act=s.data?.[p.id]?.actualDate?dayDiff(start,s.data[p.id].actualDate):null;
     const isBlock=srStats(s).blocking?.id===p.id;
     svg+=`<text class="gantt-label" x="6" y="${y+12}">${esc(p.name.length>20?p.name.slice(0,19)+'…':p.name)}</text>`;
@@ -1599,8 +1689,8 @@ function buildSRSummary(s){
     </div>
     <div style="flex:1;min-width:170px;background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-md);padding:10px 12px">
       <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);font-weight:700;margin-bottom:4px">Target / Committed</div>
-      <div>${s.committedDate?'<i class="fas fa-flag" style="color:var(--c-amber)"></i> '+fmtDate(s.committedDate):'90-day template'}</div>
-      <div style="margin-top:3px;color:var(--c-text3)">${tgt?fmtDate(tgt):'—'} · started ${fmtDateShort(s.startDate)}</div>
+      <div>${s.committedDate?'<i class="fas fa-flag" style="color:var(--c-amber)"></i> '+fmtDate(s.committedDate):esc(templateName(s))}</div>
+      <div style="margin-top:3px;color:var(--c-text3)">${tgt?fmtDate(tgt):'—'} · ${esc(templateName(s))} · started ${fmtDateShort(s.startDate)}</div>
     </div>
     <div style="flex:1;min-width:170px;background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-md);padding:10px 12px">
       <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);font-weight:700;margin-bottom:4px">Bottleneck</div>
@@ -1620,7 +1710,7 @@ function openSRDetail(id){
   document.getElementById('srDelBtn').style.display=admin?'inline-flex':'none';
   const start=s.startDate?pd(s.startDate):null;const st=srStats(s);
   const rows=PHASES.map((p,i)=>{
-    const rec=s.data?.[p.id]||{};const tgt=start?(()=>{const t=new Date(start);t.setDate(start.getDate()+p.days);return t;})():null;
+    const rec=s.data?.[p.id]||{};const tgt=start?(()=>{const t=new Date(start);t.setDate(start.getDate()+planArr(s)[i]);return t;})():null;
     const act=rec.actualDate?pd(rec.actualDate):null;
     const variance=act&&tgt?Math.round((act-tgt)/86400000):(tgt&&!act?Math.round((today0()-tgt)/86400000):null);
     const isBlock=st.blocking?.id===p.id;const isDelayed=variance!=null&&variance>0;
@@ -1734,9 +1824,11 @@ function openSREdit(id){
   document.getElementById('sr-dealer').value=s.dealerName||'';
   document.getElementById('sr-mobile').value=s.mobileNumber||'';
   document.getElementById('sr-rm').value=s.rm||'';
+  const zsel=document.getElementById('sr-zone');if(zsel)zsel.value=s.zone||'';
   document.getElementById('sr-start').value=s.startDate||'';
   document.getElementById('sr-commit').value=s.committedDate||'';
   document.getElementById('sr-note').value=s.note||'';
+  fillTemplateSelect(s.templateId||'standard');
   document.getElementById('sr-lat').value=s.lat||'';
   document.getElementById('sr-lng').value=s.lng||'';
   document.querySelector('#addSRModal .modal-title').textContent='Edit Showroom';
@@ -1796,7 +1888,9 @@ function renderDLKanban(body,list){
   body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board" id="dlKanban">${cols}</div></div>`;
   /* card open + drag */
   body.querySelectorAll('.kk').forEach(card=>{
+    card.tabIndex=0;card.setAttribute('role','button');
     card.addEventListener('click',e=>{if(e.target.closest('a'))return;openDLDetail(card.dataset.id);});
+    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDLDetail(card.dataset.id);}});
     if(isAdmin()){
       card.setAttribute('draggable','true');
       card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.dataset.id);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');});
@@ -1864,7 +1958,7 @@ function openDLDetail(id){
       ${i<funnel.length-1?`<div style="position:absolute;top:13px;left:60%;right:-40%;height:2px;background:${i<curIdx&&!isRejectStage(cur)?'var(--c-green)':'var(--c-border2)'}"></div>`:''}
     </div>`;
   }).join('');
-  const docs=DOC_KEYS.map(k=>`<label class="doc-item"><input type="checkbox" data-dockey="${k}" ${d.documents?.[k]?'checked':''} ${admin?'':'disabled'}><span>${esc(DOC_LABELS[k])}</span></label>`).join('');
+  const docs=DOC_KEYS.map(k=>{const lnk=d.docLinks?.[k];return`<div class="doc-item"><input type="checkbox" data-dockey="${k}" ${d.documents?.[k]?'checked':''} ${admin?'':'disabled'}><span style="flex:1">${esc(DOC_LABELS[k])}</span>${lnk?`<a href="${esc(lnk)}" target="_blank" title="Open document" onclick="event.stopPropagation()" style="color:var(--c-blue)"><i class="fas fa-up-right-from-square" style="font-size:0.66rem"></i></a>`:''}${admin?`<button class="doc-link-btn" data-dockey="${k}" title="${lnk?'Edit link':'Attach link'}" style="background:none;border:none;color:var(--c-text3);cursor:pointer;padding:1px 2px"><i class="fas fa-${lnk?'pen':'paperclip'}" style="font-size:0.64rem"></i></button>`:''}</div>`;}).join('');
   let controls='';
   if(admin&&!isRejectStage(cur)){
     controls=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -1892,7 +1986,8 @@ function openDLDetail(id){
     document.getElementById('dlPrevBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx-1]));
     document.getElementById('dlRejBtn')?.addEventListener('click',()=>doMoveStage(id,cur==='CFT Selected'||curIdx>=2?'CFT-Reject':'Shortlist-reject'));
     document.getElementById('dlReinstateBtn')?.addEventListener('click',()=>doMoveStage(id,'Interested'));
-    document.querySelectorAll('#dlDetailBody [data-dockey]').forEach(cb=>cb.addEventListener('change',()=>updateDLDoc(id,cb.dataset.dockey,cb.checked)));
+    document.querySelectorAll('#dlDetailBody input[data-dockey]').forEach(cb=>cb.addEventListener('change',()=>updateDLDoc(id,cb.dataset.dockey,cb.checked)));
+    document.querySelectorAll('#dlDetailBody .doc-link-btn').forEach(b=>b.addEventListener('click',()=>setDocLink(id,b.dataset.dockey)));
   }
   openModal('dlDetailModal');
 }
@@ -1931,6 +2026,19 @@ function execDLStage(id,newStage,reason){
   if(currentDlId===id&&document.getElementById('dlDetailModal').classList.contains('on'))openDLDetail(id);
   renderView();
 }
+function setDocLink(id,key){
+  const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
+  const cur=d.docLinks?.[key]||'';
+  const url=prompt(`Link for "${DOC_LABELS[key]}" — paste a Drive/SharePoint URL (leave blank to remove):`,cur);
+  if(url===null)return;
+  const links={...(d.docLinks||{})};const v=url.trim();
+  if(v)links[key]=v;else delete links[key];
+  d.docLinks=links;
+  const hist=(d.stageHistory||[]).concat([{note:`${DOC_LABELS[key]} link ${v?'attached':'removed'}`,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);d.stageHistory=hist;
+  updateDoc(doc(db,'dealerOnboarding',id),{docLinks:links,stageHistory:hist,updatedAt:serverTimestamp()})
+    .then(()=>{toast(v?'Link saved':'Link removed','success');openDLDetail(id);})
+    .catch(e=>toast('Save failed: '+e.message,'error'));
+}
 function updateDLDoc(id,key,checked){
   const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
   const docs={...(d.documents||{}),[key]:checked};
@@ -1955,6 +2063,7 @@ function openDLEdit(id){
   document.getElementById('dl-city').value=d.city||'';
   document.getElementById('dl-mobile').value=d.mobileNumber||'';
   document.getElementById('dl-rm').value=d.rm||'';
+  const dzsel=document.getElementById('dl-zone');if(dzsel)dzsel.value=d.zone||'';
   document.getElementById('dl-start').value=d.startDate||'';
   document.getElementById('dl-lat').value=d.lat||'';
   document.getElementById('dl-lng').value=d.lng||'';
@@ -1991,7 +2100,9 @@ function renderPipeline(){
     }).join('');
     body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board">${cols}</div></div>`;
     body.querySelectorAll('.kk').forEach(card=>{
+      card.tabIndex=0;card.setAttribute('role','button');
       card.addEventListener('click',e=>{if(e.target.closest('a'))return;openPLDetail(card.dataset.id);});
+      card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPLDetail(card.dataset.id);}});
       if(isAdmin()){
         card.setAttribute('draggable','true');
         card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.dataset.id);card.classList.add('dragging');});
@@ -2012,8 +2123,9 @@ function renderPipeline(){
 async function doPLMove(id,newStage){
   const p=S.pipeline.find(x=>x.id===id);if(!p||!isAdmin())return;const cur=p.stage||'Lead Generated';if(cur===newStage)return;
   if(!await showConfirm(`Move "${p.name}" from "${cur}" to "${newStage}"?`,'Change Stage'))return;
-  p.stage=newStage; /* optimistic */
-  updateDoc(doc(db,'pipeline',id),{stage:newStage,updatedAt:serverTimestamp()})
+  const cl=(p.changeLog||[]).concat([{from:cur,to:newStage,field:'stage',at:new Date().toISOString(),by:email||'admin',text:`Stage: ${cur} → ${newStage}`}]).slice(-60);
+  p.stage=newStage;p.changeLog=cl; /* optimistic */
+  updateDoc(doc(db,'pipeline',id),{stage:newStage,changeLog:cl,updatedAt:serverTimestamp()})
     .then(()=>{toast(`Moved to ${newStage}`,'success');if(newStage==='Live')addNotif('Lead Live',`${p.name} is now Live`,'ok',id,null);})
     .catch(e=>toast('Update failed: '+e.message,'error'));
   renderView();
@@ -2036,7 +2148,9 @@ function openPLDetail(id){
       <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Created</div>${fmtDate(p.createdAt)}</div>
     </div>
     ${p.notes?`<div style="margin-top:14px"><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">Notes</div><div style="font-size:0.8rem;color:var(--c-text2);background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-md);padding:10px 12px">${esc(p.notes)}</div></div>`:''}
-    ${isAdmin()?`<div style="margin-top:16px"><label class="form-label">Move to stage</label><select class="form-select" id="plStageSel">${PL_STAGES.map(st=>`<option ${st===(p.stage||'Lead Generated')?'selected':''}>${esc(st)}</option>`).join('')}</select></div>`:''}`;
+    ${p.followupDate?`<div style="margin-top:12px"><span class="chip ${dayDiff(today0(),p.followupDate)<=0?'chip-warn':'chip-info'}"><i class="fas fa-bell"></i> Follow-up ${fmtDate(p.followupDate)}${dayDiff(today0(),p.followupDate)<0?' (overdue)':''}</span></div>`:''}
+    ${isAdmin()?`<div style="margin-top:16px"><label class="form-label">Move to stage</label><select class="form-select" id="plStageSel">${PL_STAGES.map(st=>`<option ${st===(p.stage||'Lead Generated')?'selected':''}>${esc(st)}</option>`).join('')}</select></div>`:''}
+    ${(()=>{const lg=(p.changeLog||[]).slice().reverse();return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${lg.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${lg.length}</span>`:''}</div>${lg.length?`<div style="max-height:170px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${lg.map(histRowHTML).join('')}</div>`:'<div style="font-size:0.74rem;color:var(--c-text3)">No stage changes recorded yet.</div>'}</div>`;})()}`;
   if(isAdmin())document.getElementById('plStageSel')?.addEventListener('change',e=>{closeModal('plDetailModal');doPLMove(id,e.target.value);});
   openModal('plDetailModal');
 }
@@ -2045,6 +2159,7 @@ function openPLDetail(id){
 function mkIcon(color){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 2px ${color}66,0 2px 6px rgba(0,0,0,0.4)"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
 function renderMap(){
   const c=document.getElementById('content');if(!c)return;
+  if(leafletMap){try{leafletMap.remove();}catch(e){}leafletMap=null;}
   c.innerHTML=`
   <div class="map-legend">
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-green)"></span>Showroom (on track / live)</div>
@@ -2053,22 +2168,41 @@ function renderMap(){
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-blue)"></span>Property</div>
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-purple)"></span>Partner</div>
   </div>
+  <div id="mapMsg" style="display:none;margin-bottom:12px;padding:11px 14px;border-radius:var(--r-md);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.45);color:var(--c-amber);font-size:0.8rem;line-height:1.5"></div>
   <div id="mapContainer"></div>
   <div class="sh"><div><span class="sh-title">Geographic Distribution</span></div></div>
   <div style="font-size:0.78rem;color:var(--c-text2)" id="mapStats"></div>`;
   setTimeout(()=>{
-    const el=document.getElementById('mapContainer');if(!el||typeof L==='undefined')return;
+    const el=document.getElementById('mapContainer');
+    if(!el){return;}
+    if(typeof L==='undefined'){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--c-text3);font-size:0.82rem">Map library (Leaflet) failed to load from unpkg.com. Your network may be blocking it — the rest of the app is unaffected.</div>';return;}
+    if(view!=='map'){return;} /* user navigated away before init */
+    if(el._leaflet_id){return;} /* already initialised — avoid double-init crash */
+    const showMsg=t=>{const m=document.getElementById('mapMsg');if(m){m.innerHTML=t;m.style.display='block';}};
+    const hideMsg=()=>{const m=document.getElementById('mapMsg');if(m)m.style.display='none';};
     try{
       leafletMap=L.map(el,{scrollWheelZoom:false}).setView([22.9734,78.6569],5);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(leafletMap);
+      let tilesOK=false,usedFallback=false;
+      const addTiles=(url,opts)=>{const t=L.tileLayer(url,opts);
+        t.on('load',()=>{tilesOK=true;hideMsg();});
+        t.on('tileerror',()=>{if(usedFallback||!leafletMap)return;usedFallback=true;try{leafletMap.removeLayer(t);}catch(e){}addTiles('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19});});
+        t.addTo(leafletMap);};
+      /* primary: dark basemap (CARTO); auto-fallback: standard OSM tiles */
+      addTiles('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO',maxZoom:20});
       const pts=[];let plotted=0;
       S.showrooms.forEach(s=>{const la=parseFloat(s.lat),ln=parseFloat(s.lng);if(isFinite(la)&&isFinite(ln)){const lvl=srLevel(s);const col=lvl==='critical'?'#EF4444':lvl==='warning'?'#F59E0B':'#10B981';L.marker([la,ln],{icon:mkIcon(col)}).addTo(leafletMap).bindPopup(`<b>${esc(s.name)}</b><br>${esc(s.city||'')} · ${isSRDone(s)?'Live':srStats(s).pctW+'% complete'}`);pts.push([la,ln]);plotted++;}});
       S.properties.forEach(p=>{const la=parseFloat(p.lat),ln=parseFloat(p.lng);if(isFinite(la)&&isFinite(ln)){L.marker([la,ln],{icon:mkIcon('#3B82F6')}).addTo(leafletMap).bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.city||'')} · ${esc(p.status||'')}`);pts.push([la,ln]);plotted++;}});
       S.dealers.forEach(d=>{const la=parseFloat(d.lat),ln=parseFloat(d.lng);if(isFinite(la)&&isFinite(ln)){L.marker([la,ln],{icon:mkIcon('#8B5CF6')}).addTo(leafletMap).bindPopup(`<b>${esc(d.name)}</b><br>${esc(d.city||'')} · ${esc(d.currentStage||'')}`);pts.push([la,ln]);plotted++;}});
-      if(pts.length)leafletMap.fitBounds(pts,{padding:[40,40],maxZoom:10});
+      /* KEY FIX: the container was just inserted, so Leaflet cached a wrong size and never
+         requested tiles. Recalculate once it has painted, THEN fit to the markers. */
+      const fit=()=>{if(!leafletMap)return;try{leafletMap.invalidateSize();if(pts.length)leafletMap.fitBounds(pts,{padding:[40,40],maxZoom:10});}catch(e){}};
+      requestAnimationFrame(()=>setTimeout(fit,60));
+      setTimeout(fit,350);
+      /* self-diagnose: if NO tiles loaded after a few seconds, the network is almost certainly blocking the tile servers */
+      setTimeout(()=>{if(!tilesOK&&view==='map'&&leafletMap){showMsg('<b>Map tiles could not load.</b> The map and your pins are working, but the background tiles were blocked — usually a corporate firewall blocking <code>basemaps.cartocdn.com</code> and <code>tile.openstreetmap.org</code>. Ask IT to allow those, or open the app on a network that permits them. The rest of the dashboard is unaffected.');}},5000);
       const ms=document.getElementById('mapStats');if(ms)ms.textContent=`${plotted} location${plotted!==1?'s':''} plotted. ${S.showrooms.length+S.properties.length+S.dealers.length-plotted} record(s) missing coordinates.`;
-    }catch(e){console.warn('Map error',e);}
-  },80);
+    }catch(e){console.warn('Map error',e);el.innerHTML='<div style="padding:30px;text-align:center;color:var(--c-text3);font-size:0.82rem">Could not initialise the map: '+esc(e.message)+'</div>';}
+  },120);
 }
 
 /* ── PROPERTIES VIEW ── */
@@ -2115,7 +2249,7 @@ function renderInsights(){
   destroyCharts();
   /* forecast band */
   const fcList=activeSR().map(s=>({s,fc:forecastSR(s)})).filter(x=>x.fc).sort((a,b)=>b.fc.p50-a.fc.p50).slice(0,12);
-  const fbHtml=fcList.length?fcList.map(({s,fc})=>{const tgt=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):TOTAL_PLAN;const col=fc.p50<=tgt?'var(--c-green)':fc.p50<=tgt*1.1?'var(--c-amber)':'var(--c-red)';return`<div class="fb-item"><div class="fb-name">${esc(s.name)}</div><div class="fb-conf">${fc.confidence}% confidence · SPI ${fc.spi.toFixed(2)}</div><div class="fb-bar"><div class="fb-fill" style="width:${fc.confidence}%;background:${col}"></div></div><div class="fb-date">~${fc.p50}d · ${fmtDateShort(fc.completionDate)}</div></div>`;}).join(''):'<p style="color:var(--c-text3);font-size:0.8rem">No active showrooms with progress to forecast.</p>';
+  const fbHtml=fcList.length?fcList.map(({s,fc})=>{const tgt=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):planTotal(s);const col=fc.p50<=tgt?'var(--c-green)':fc.p50<=tgt*1.1?'var(--c-amber)':'var(--c-red)';return`<div class="fb-item"><div class="fb-name">${esc(s.name)}</div><div class="fb-conf">${fc.confidence}% confidence · SPI ${fc.spi.toFixed(2)}</div><div class="fb-bar"><div class="fb-fill" style="width:${fc.confidence}%;background:${col}"></div></div><div class="fb-date">~${fc.p50}d · ${fmtDateShort(fc.completionDate)}</div></div>`;}).join(''):'<p style="color:var(--c-text3);font-size:0.8rem">No active showrooms with progress to forecast.</p>';
   c.innerHTML=`
   <div class="forecast-band"><div class="fb-title"><i class="fas fa-wand-magic-sparkles"></i> Completion Forecast — time-weighted, SPI-based confidence</div><div class="fb-grid">${fbHtml}</div></div>
   <div class="analytics-grid">
@@ -2165,6 +2299,59 @@ function buildCharts(){
   if(elS)charts.stageC=new Chart(elS,{type:'bar',data:{labels:[...STAGE_CATS.map(sc=>sc.name),'Completed'],datasets:[{data:[...stageCounts,doneCount],backgroundColor:[...STAGE_CATS.map(sc=>sc.color),'#10B981'],borderRadius:6}]},options:{plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{ticks:{...tickFont,maxRotation:50,minRotation:30},grid:{display:false}},y:{ticks:tickFont,grid:gridOpt,beginAtZero:true}}}});
 }
 
+/* ── ZONES & RM SCORECARDS ── */
+function renderZones(){
+  const c=document.getElementById('content');if(!c)return;
+  const zoneOf=r=>r.zone||'Unassigned';
+  const present=[...new Set([...S.showrooms,...S.dealers,...S.pipeline].map(zoneOf))];
+  const zoneList=[...ZONES.filter(z=>present.includes(z)),...present.filter(z=>!ZONES.includes(z))];
+  if(!S.showrooms.length&&!S.dealers.length&&!S.pipeline.length){c.innerHTML=`<div class="empty-state"><i class="fas fa-sitemap" style="color:var(--c-text3)"></i><h3>No data yet</h3><p>Add showrooms, partners or leads (with a zone) to see scorecards.</p></div>`;return;}
+  const zoneCard=z=>{
+    const srs=S.showrooms.filter(s=>zoneOf(s)===z),actSr=srs.filter(s=>!isSRDone(s));
+    const crit=actSr.filter(s=>srLevel(s)==='critical').length,warn=actSr.filter(s=>srLevel(s)==='warning').length;
+    const done=srs.filter(isSRDone).length;
+    const avgProg=actSr.length?Math.round(actSr.reduce((a,s)=>a+srStats(s).pctW,0)/actSr.length):0;
+    const dls=S.dealers.filter(d=>zoneOf(d)===z),actDl=dls.filter(d=>!isDLDone(d)&&!isDLRej(d)).length,onb=dls.filter(isDLDone).length;
+    const leads=S.pipeline.filter(p=>zoneOf(p)===z),live=leads.filter(p=>p.stage==='Live').length;
+    const health=crit>0?'red':warn>0?'amber':'green';
+    return`<div class="ecard" style="border-left:3px solid var(--c-${health})">
+      <div class="ecard-top"><div class="ecard-head"><div class="ecard-name"><i class="fas fa-location-dot" style="opacity:0.5;margin-right:5px"></i>${esc(z)}</div>${crit>0?`<span class="chip chip-crit">${crit} critical</span>`:warn>0?`<span class="chip chip-warn">${warn} at risk</span>`:'<span class="chip chip-ok">healthy</span>'}</div></div>
+      <div class="ecard-body">
+        <div class="ecard-stats">
+          <div class="es"><div class="es-label">Active SR</div><div class="es-val">${actSr.length}</div></div>
+          <div class="es"><div class="es-label">Avg Progress</div><div class="es-val ${avgProg>=60?'green':avgProg>=30?'amber':''}">${avgProg}%</div></div>
+          <div class="es"><div class="es-label">Live</div><div class="es-val green">${done}</div></div>
+        </div>
+        <div class="ecard-stats">
+          <div class="es"><div class="es-label">Partners</div><div class="es-val">${actDl}</div></div>
+          <div class="es"><div class="es-label">Onboarded</div><div class="es-val green">${onb}</div></div>
+          <div class="es"><div class="es-label">Leads</div><div class="es-val">${leads.length}</div></div>
+        </div>
+      </div>
+    </div>`;
+  };
+  /* RM leaderboard */
+  const rms=[...new Set([...S.showrooms,...S.dealers,...S.pipeline].map(r=>r.rm).filter(Boolean))];
+  const rmStat=rm=>{
+    const srs=S.showrooms.filter(s=>s.rm===rm),actSr=srs.filter(s=>!isSRDone(s));
+    const crit=actSr.filter(s=>srLevel(s)==='critical').length;
+    const avgDelay=actSr.length?Math.round(actSr.reduce((a,s)=>a+srStats(s).max,0)/actSr.length):0;
+    const done=srs.filter(isSRDone).length;
+    const dls=S.dealers.filter(d=>d.rm===rm),actDl=dls.filter(d=>!isDLDone(d)&&!isDLRej(d)).length,onb=dls.filter(isDLDone).length;
+    const avgDoc=actDl?Math.round(dls.filter(d=>!isDLDone(d)&&!isDLRej(d)).reduce((a,d)=>a+docPct(d.documents),0)/actDl):0;
+    const leads=S.pipeline.filter(p=>p.rm===rm).length;
+    return{rm,actSr:actSr.length,crit,avgDelay,done,actDl,onb,avgDoc,leads};
+  };
+  const rows=rms.map(rmStat).sort((a,b)=>b.crit-a.crit||b.avgDelay-a.avgDelay);
+  const rmTable=rows.length?`<div style="overflow-x:auto"><table class="phase-table"><thead><tr><th>RM</th><th>Active SR</th><th>Critical</th><th>Avg Delay</th><th>Live</th><th>Partners</th><th>Onboarded</th><th>Avg Docs</th><th>Leads</th></tr></thead><tbody>${rows.map(r=>`<tr><td data-label="RM"><strong>${esc(r.rm)}</strong></td><td data-label="Active SR">${r.actSr}</td><td data-label="Critical"><span style="color:${r.crit>0?'var(--c-red)':'var(--c-text3)'};font-weight:700">${r.crit}</span></td><td data-label="Avg Delay"><span style="color:${r.avgDelay>=10?'var(--c-red)':r.avgDelay>=6?'var(--c-amber)':'var(--c-text2)'}">${r.avgDelay}d</span></td><td data-label="Live">${r.done}</td><td data-label="Partners">${r.actDl}</td><td data-label="Onboarded">${r.onb}</td><td data-label="Avg Docs">${r.avgDoc}%</td><td data-label="Leads">${r.leads}</td></tr>`).join('')}</tbody></table></div>`:'<p style="color:var(--c-text3);font-size:0.8rem">No RMs assigned yet.</p>';
+  const unzoned=S.showrooms.filter(s=>!s.zone).length+S.dealers.filter(d=>!d.zone).length+S.pipeline.filter(p=>!p.zone).length;
+  c.innerHTML=`
+  <div class="sh"><div><span class="sh-title">Zone Health</span><span class="sh-count">${zoneList.length}</span></div>${unzoned>0?`<span style="font-size:0.7rem;color:var(--c-amber)"><i class="fas fa-triangle-exclamation"></i> ${unzoned} record(s) without a zone — edit them to assign</span>`:''}</div>
+  <div class="card-grid" style="margin-bottom:24px">${zoneList.map(zoneCard).join('')}</div>
+  <div class="sh"><div><span class="sh-title">RM Leaderboard</span><span class="sh-count">${rows.length}</span></div><span style="font-size:0.7rem;color:var(--c-text3)">Sorted by critical sites, then average delay</span></div>
+  ${rmTable}`;
+}
+
 /* ── DATA HEALTH ── */
 function renderDataQuality(){
   const issues=[];
@@ -2204,6 +2391,7 @@ function renderSettings(){
         <button class="btn btn-outline btn-sm" onclick="exportDL()"><i class="fas fa-file-csv"></i> Partners CSV</button>
         <button class="btn btn-outline btn-sm" onclick="exportPL()"><i class="fas fa-file-csv"></i> Pipeline CSV</button>
         <button class="btn btn-outline btn-sm" onclick="exportAll()"><i class="fas fa-file-code"></i> Full Backup (JSON)</button>
+        <button class="btn btn-outline btn-sm" onclick="generateWeeklyReport()"><i class="fas fa-file-lines"></i> Weekly Report (PDF)</button>
         ${isAdmin()?`<button class="btn btn-outline btn-sm" id="csvImportBtn"><i class="fas fa-file-import"></i> Import Showrooms CSV</button><input type="file" id="csvImportInput" accept=".csv" style="display:none">`:''}
       </div>
     </div>
@@ -2211,14 +2399,35 @@ function renderSettings(){
       <h3><i class="fas fa-heart-pulse"></i> Data Health</h3>
       <div id="dqPanel">${renderDataQuality()}</div>
     </div>
+    ${isAdmin()?`<div class="setting-card" style="grid-column:1/-1">
+      <h3><i class="fas fa-sliders"></i> SLA &amp; Thresholds <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— tune the KPI without code; saved to Firestore for everyone</span></h3>
+      <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin:6px 0 8px">Risk triggers (days)</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Critical — phase overdue ≥</label><input type="number" class="form-input cfg-inp" id="cfg-critOverdue" value="${RISK.critOverdue}" min="1"></div>
+        <div class="form-group"><label class="form-label">Critical — projected miss ≥</label><input type="number" class="form-input cfg-inp" id="cfg-critProjMiss" value="${RISK.critProjMiss}" min="1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Warning — phase overdue ≥</label><input type="number" class="form-input cfg-inp" id="cfg-warnOverdue" value="${RISK.warnOverdue}" min="1"></div>
+        <div class="form-group"><label class="form-label">Warning — projected miss ≥</label><input type="number" class="form-input cfg-inp" id="cfg-warnProjMiss" value="${RISK.warnProjMiss}" min="1"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Pipeline follow-up reminder after (days)</label><input type="number" class="form-input cfg-inp" id="cfg-followupDays" value="${CFG.followupDays}" min="1"></div>
+      <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin:10px 0 8px">Partner stage targets (days to reach)</div>
+      <div class="form-row">
+        ${['Shortlisted','CFT Selected','Documentation','Onboarded'].map(st=>`<div class="form-group"><label class="form-label">${esc(st)}</label><input type="number" class="form-input cfg-stage" data-stage="${esc(st)}" value="${STAGE_TARGETS[st]||0}" min="0"></div>`).join('')}
+      </div>
+      <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin:10px 0 8px">Plan templates <span style="font-weight:500;text-transform:none">— 9 cumulative day numbers, comma-separated</span></div>
+      ${CFG.templates.map(t=>`<div class="form-group"><label class="form-label">${esc(t.name)} <span style="color:var(--c-text3);font-weight:400">(${esc(t.id)})</span></label><input type="text" class="form-input cfg-tpl" data-tpl="${esc(t.id)}" value="${esc((t.phases||[]).join(', '))}"></div>`).join('')}
+      <button class="btn btn-primary btn-sm" id="cfgSaveBtn" style="margin-top:6px"><i class="fas fa-save"></i> Save &amp; recalculate</button>
+      <div style="font-size:0.66rem;color:var(--c-text3);margin-top:8px">Changes apply to every device and immediately re-score all showrooms and partners.</div>
+    </div>`:''}
     <div class="setting-card">
       <h3><i class="fas fa-circle-info"></i> About</h3>
       <div style="font-size:0.8rem;color:var(--c-text2);line-height:1.7">
-        <div><strong>AIS Expansion OS</strong> · v7.0</div>
+        <div><strong>AIS Expansion OS</strong> · v8.0</div>
         <div>Operations Intelligence Platform</div>
         <div style="margin-top:8px;color:var(--c-text3)">Firebase project: ais-showroom-dashboard</div>
         <div style="color:var(--c-text3)">Records: ${S.showrooms.length} SR · ${S.dealers.length} CP · ${S.pipeline.length} leads · ${S.properties.length} props</div>
-        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v7.0</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v8.0</button>
       </div>
     </div>
   </div>`;
@@ -2227,10 +2436,33 @@ function renderSettings(){
   document.getElementById('notifToggle')?.addEventListener('click',async e=>{if(Notification?.permission!=='granted'){const p=await Notification.requestPermission();e.target.classList.toggle('on',p==='granted');toast(p==='granted'?'Notifications enabled':'Notifications blocked',p==='granted'?'success':'warning');}else toast('Manage in browser settings','info');});
   document.getElementById('csvImportBtn')?.addEventListener('click',()=>document.getElementById('csvImportInput').click());
   document.getElementById('csvImportInput')?.addEventListener('change',handleCSVImport);
+  document.getElementById('cfgSaveBtn')?.addEventListener('click',()=>{
+    const num=(id,fallback)=>{const v=parseInt(document.getElementById(id)?.value);return isNaN(v)?fallback:v;};
+    RISK={critOverdue:num('cfg-critOverdue',RISK.critOverdue),warnOverdue:num('cfg-warnOverdue',RISK.warnOverdue),critProjMiss:num('cfg-critProjMiss',RISK.critProjMiss),warnProjMiss:num('cfg-warnProjMiss',RISK.warnProjMiss)};
+    CFG.followupDays=num('cfg-followupDays',CFG.followupDays);
+    document.querySelectorAll('.cfg-stage').forEach(i=>{const v=parseInt(i.value);if(!isNaN(v))STAGE_TARGETS[i.dataset.stage]=v;});
+    let bad=false;
+    document.querySelectorAll('.cfg-tpl').forEach(i=>{const arr=i.value.split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x));i.classList.remove('input-error');if(arr.length!==PHASES.length){i.classList.add('input-error');bad=true;return;}const t=CFG.templates.find(x=>x.id===i.dataset.tpl);if(t)t.phases=arr;});
+    if(bad){toast(`Each template needs exactly ${PHASES.length} numbers`,'error');return;}
+    saveConfig();renderSettings();
+  });
 }
 
 /* ── WHAT'S NEW / IMPROVEMENTS VIEW ── */
 const IMPROVEMENTS=[
+  {group:'v8.0 — utility & sustainability wave',ico:'fa-rocket',col:'#10B981',items:[
+    {t:'Editable SLAs & thresholds (no code)',badge:'done',d:'Admins can tune the risk triggers, partner stage targets, and follow-up window from Settings → SLA & Thresholds. Saved to Firestore and applied on every device, instantly re-scoring all showrooms and partners.'},
+    {t:'Per-showroom plan templates',badge:'done',d:'A metro flagship and a small franchise can be measured against different schedules. Pick a template (Standard 90-day, Compact 60-day, Flagship 120-day, or your own) per showroom; all progress, forecast, gantt and risk math follow that curve.'},
+    {t:'Zones & RM scorecards',badge:'done',d:'A new view rolls performance up by zone (health, active sites, average progress, partners, leads) and ranks every RM by critical sites and average delay. Records carry an optional zone.'},
+    {t:'One-click weekly report (PDF)',badge:'done',d:'Generates a printable executive summary — critical sites, launches due, stuck partners, follow-ups due — in a new tab, ready to print or save as PDF.'},
+    {t:'Follow-up reminders',badge:'done',d:'Set a "follow-up by" date on a pipeline lead and it surfaces in Today when due or overdue, instead of relying only on age.'},
+    {t:'Document links on onboarding',badge:'done',d:'Attach a Drive/SharePoint URL to each partner document, not just a checkbox — so the actual file is one click away.'},
+    {t:'Bulk reassign (RM & zone)',badge:'done',d:'Select multiple records and reassign their RM or set their zone in one action.'},
+    {t:'Data normalization layer',badge:'done',d:'Every record is coerced to a known shape as it loads, so a single malformed or legacy document can no longer break a view (the root cause behind the earlier history glitch).'},
+    {t:'Global error boundary',badge:'done',d:'A thrown error now shows a friendly recoverable message instead of a blank screen, and uncaught errors surface a toast.'},
+    {t:'Pipeline change history',badge:'done',d:'Stage moves on leads are now logged and shown in the lead detail, matching showrooms and partners.'},
+    {t:'App Check scaffold',badge:'config',d:'Firebase App Check is wired and ready — paste a reCAPTCHA v3 site key (one line) to harden the public config against abuse. Disabled by default so nothing breaks.'},
+  ]},
   {group:'Showroom KPI — the core overhaul',ico:'fa-gauge-high',col:'#3B82F6',items:[
     {t:'Time-weighted progress',badge:'done',d:'Progress now weights each phase by its planned duration (e.g. Interior is 20 days, Dimensions is 5), instead of counting every phase as 1/9. A site that cleared the four quick early phases no longer shows ~44% when only ~17% of the schedule is actually behind it.'},
     {t:'Bottleneck isolation',badge:'done',d:'The earliest incomplete overdue phase is flagged as the true blocker; later phases are shown as "cascading" rather than each being painted red. One root slip no longer makes five phases look independently broken.'},
@@ -2264,13 +2496,13 @@ function renderImprovements(){
   let n=0;
   c.innerHTML=`
   <div class="imp-hero">
-    <h2>What's new in v7.0</h2>
-    <p>This release rebuilds the showroom KPI — the metric the team relies on to catch slipping launches — and closes a set of data-integrity and reliability gaps found in the audit. Every point below is reflected in the live code.</p>
+    <h2>What's new in v8.0</h2>
+    <p>v8.0 builds on the v7 showroom-KPI rebuild with a utility &amp; sustainability wave: tunable SLAs, per-showroom plan templates, zone/RM scorecards, a weekly report, follow-up reminders, document links, bulk actions, and hardening (data normalization + an error boundary). Everything below is reflected in the live code.</p>
     <div class="imp-stats">
       <div class="imp-stat"><b>${all.length}</b><span>Improvements</span></div>
       <div class="imp-stat"><b style="color:var(--c-green)">${doneN}</b><span>Implemented</span></div>
       <div class="imp-stat"><b style="color:var(--c-amber)">${cfgN}</b><span>Config to verify</span></div>
-      <div class="imp-stat"><b>6</b><span>Showroom KPI fixes</span></div>
+      <div class="imp-stat"><b>2</b><span>Server-side (rules, key proxy)</span></div>
     </div>
   </div>
   ${IMPROVEMENTS.map(g=>`
@@ -2289,7 +2521,51 @@ function renderImprovements(){
           </div>
         </div>`;}).join('')}
     </div>`).join('')}
-  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v6.0 → v7.0</div>`;
+  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v7.0 → v8.0</div>`;
+}
+
+/* ── WEEKLY REPORT (printable / PDF) ── */
+function generateWeeklyReport(){
+  const today=new Date();const tx=esc;
+  const crit=activeSR().filter(s=>srLevel(s)==='critical');
+  const warn=activeSR().filter(s=>srLevel(s)==='warning');
+  const doneCount=S.showrooms.filter(isSRDone).length;
+  const dueLaunch=activeSR().map(s=>({s,t:srTargetDate(s)})).filter(x=>x.t&&dayDiff(today0(),x.t)<=21).sort((a,b)=>dayDiff(today0(),a.t)-dayDiff(today0(),b.t));
+  const stuckDL=activeDL().filter(d=>dlTimeline(d).level==='critical');
+  const followups=S.pipeline.filter(p=>p.followupDate&&p.stage!=='Live'&&dayDiff(today0(),p.followupDate)<=0);
+  const row=(cells)=>`<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
+  const sec=(title,body)=>`<h2>${tx(title)}</h2>${body}`;
+  const list=(arr,fn,empty)=>arr.length?`<table>${arr.map(fn).join('')}</table>`:`<p class="muted">${empty}</p>`;
+  const html=`<!doctype html><html><head><meta charset="utf-8"><title>AIS Expansion — Weekly Report</title>
+  <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;max-width:900px;margin:24px auto;padding:0 20px;line-height:1.5}
+  h1{font-size:22px;margin:0 0 2px}h2{font-size:14px;text-transform:uppercase;letter-spacing:0.04em;color:#444;border-bottom:2px solid #eee;padding-bottom:5px;margin:24px 0 10px}
+  .sub{color:#666;font-size:13px;margin-bottom:18px}.muted{color:#999;font-size:13px}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}.kpi{border:1px solid #e5e5e5;border-radius:8px;padding:10px 14px;min-width:110px}
+  .kpi b{font-size:22px;display:block;line-height:1}.kpi span{font-size:11px;text-transform:uppercase;color:#777;letter-spacing:0.04em}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid #eee}
+  .red{color:#c0392b;font-weight:600}.amber{color:#b9770e;font-weight:600}.green{color:#1e8449}
+  @media print{body{margin:0}.noprint{display:none}}
+  .btn{display:inline-block;background:#3B82F6;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:10px}</style></head><body>
+  <button class="btn noprint" onclick="window.print()">Print / Save as PDF</button>
+  <h1>AIS Expansion OS — Weekly Report</h1>
+  <div class="sub">${today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · generated by ${tx(email||'guest')}</div>
+  <div class="kpis">
+    <div class="kpi"><b class="${crit.length?'red':'green'}">${crit.length}</b><span>Critical SR</span></div>
+    <div class="kpi"><b class="amber">${warn.length}</b><span>At-risk SR</span></div>
+    <div class="kpi"><b>${activeSR().length}</b><span>Active SR</span></div>
+    <div class="kpi"><b class="green">${doneCount}</b><span>Live SR</span></div>
+    <div class="kpi"><b>${activeDL().length}</b><span>Active Partners</span></div>
+    <div class="kpi"><b>${S.pipeline.filter(p=>p.stage!=='Live').length}</b><span>Open Leads</span></div>
+  </div>
+  ${sec('Critical Showrooms — escalate now',list(crit,s=>{const b=srStats(s).blocking;const r=srRisk(s);return row([`<b>${tx(s.name)}</b><br><span class="muted">${tx(s.city||'')} · ${tx(s.rm||'—')}${s.zone?' · '+tx(s.zone):''}</span>`,b?`<span class="red">${tx(b.phase)} · ${b.days}d behind</span>`:`<span class="red">projected miss ${r.projMiss}d</span>`,`${srStats(s).pctW}% done`]);},'No critical showrooms. 🎉'))}
+  ${sec('Launches due / overdue (next 3 weeks)',list(dueLaunch,({s,t})=>{const dd=dayDiff(today0(),t);return row([`<b>${tx(s.name)}</b><br><span class="muted">${tx(s.rm||'—')}</span>`,dd<0?`<span class="red">${-dd}d overdue</span>`:`in ${dd}d`,`target ${fmtDate(t)}`]);},'Nothing due in the next three weeks.'))}
+  ${sec('Partners stuck',list(stuckDL,d=>row([`<b>${tx(d.name)}</b><br><span class="muted">${tx(d.city||'')} · ${tx(d.rm||'—')}</span>`,`<span class="red">${tx(d.currentStage)} · ${dlTimeline(d).delay}d late</span>`,`${docPct(d.documents)}% docs`]),'No partners stuck.'))}
+  ${sec('Follow-ups due',list(followups,p=>row([`<b>${tx(p.name)}</b><br><span class="muted">${tx(p.city||'')} · ${tx(p.rm||'—')}</span>`,`due ${fmtDate(p.followupDate)}`,tx(p.stage||'')]),'No follow-ups due.'))}
+  <p class="muted" style="margin-top:30px">Generated from AIS Expansion OS · live data snapshot at ${today.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</p>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){toast('Allow pop-ups to open the report','warning');return;}
+  w.document.write(html);w.document.close();
 }
 
 /* ── EXPORT / IMPORT ── */
@@ -2319,10 +2595,11 @@ async function handleCSVImport(e){
 
 /* ── ADD / EDIT ENTITIES ── */
 function reqd(ids){let ok=true;ids.forEach(id=>{const el=document.getElementById(id);if(el){if(!el.value.trim()){el.classList.add('input-error');ok=false;}else el.classList.remove('input-error');}});return ok;}
+function fillTemplateSelect(sel){const el=document.getElementById('sr-template');if(!el)return;el.innerHTML=CFG.templates.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');el.value=sel||'standard';}
 async function doAddSR(){
   if(!isAdmin())return;
   if(!reqd(['sr-name','sr-city','sr-rm','sr-start'])){toast('Fill required fields','warning');return;}
-  const payload={name:val('sr-name'),city:val('sr-city'),dealerName:val('sr-dealer'),mobileNumber:val('sr-mobile'),rm:val('sr-rm'),startDate:val('sr-start'),committedDate:val('sr-commit'),note:val('sr-note'),lat:val('sr-lat'),lng:val('sr-lng'),updatedAt:serverTimestamp()};
+  const payload={name:val('sr-name'),city:val('sr-city'),dealerName:val('sr-dealer'),mobileNumber:val('sr-mobile'),rm:val('sr-rm'),zone:val('sr-zone'),startDate:val('sr-start'),committedDate:val('sr-commit'),templateId:val('sr-template')||'standard',note:val('sr-note'),lat:val('sr-lat'),lng:val('sr-lng'),updatedAt:serverTimestamp()};
   try{
     if(editSrId){await updateDoc(doc(db,'showrooms',editSrId),payload);toast('Showroom updated','success');}
     else{await addDoc(collection(db,'showrooms'),{...payload,data:{},changeLog:[],createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Showroom created','success');}
@@ -2332,7 +2609,7 @@ async function doAddSR(){
 async function doAddDL(){
   if(!isAdmin())return;
   if(!reqd(['dl-name','dl-city','dl-rm','dl-start'])){toast('Fill required fields','warning');return;}
-  const payload={name:val('dl-name'),firmName:val('dl-firm'),city:val('dl-city'),mobileNumber:val('dl-mobile'),rm:val('dl-rm'),startDate:val('dl-start'),lat:val('dl-lat'),lng:val('dl-lng'),updatedAt:serverTimestamp()};
+  const payload={name:val('dl-name'),firmName:val('dl-firm'),city:val('dl-city'),mobileNumber:val('dl-mobile'),rm:val('dl-rm'),zone:val('dl-zone'),startDate:val('dl-start'),lat:val('dl-lat'),lng:val('dl-lng'),updatedAt:serverTimestamp()};
   try{
     if(editDlId){await updateDoc(doc(db,'dealerOnboarding',editDlId),payload);toast('Partner updated','success');}
     else{await addDoc(collection(db,'dealerOnboarding'),{...payload,currentStage:'Interested',status:'Active',documents:{},stageHistory:[{stage:'Interested',at:new Date().toISOString(),by:email||'admin'}],createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Partner created','success');}
@@ -2342,7 +2619,7 @@ async function doAddDL(){
 async function doAddPL(){
   if(!isAdmin())return;
   if(!reqd(['pl-name','pl-city','pl-rm'])){toast('Fill required fields','warning');return;}
-  try{await addDoc(collection(db,'pipeline'),{name:val('pl-name'),city:val('pl-city'),contact:val('pl-contact'),mobile:val('pl-mobile'),rm:val('pl-rm'),stage:val('pl-stage')||'Lead Generated',notes:val('pl-notes'),createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Lead added','success');closeModal('addPLModal');resetForm('addPLModal');}
+  try{await addDoc(collection(db,'pipeline'),{name:val('pl-name'),city:val('pl-city'),contact:val('pl-contact'),mobile:val('pl-mobile'),rm:val('pl-rm'),zone:val('pl-zone'),stage:val('pl-stage')||'Lead Generated',followupDate:val('pl-followup'),notes:val('pl-notes'),createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Lead added','success');closeModal('addPLModal');resetForm('addPLModal');}
   catch(e){toast('Save failed: '+e.message,'error');}
 }
 async function doAddProp(){
@@ -2373,7 +2650,7 @@ function closeCmd(){document.getElementById('cmdOverlay').classList.remove('on')
 function renderCmd(q){
   q=q.toLowerCase().trim();
   const res=document.getElementById('cmdRes');cmdItems=[];
-  const navs=[['today','Today','fa-bolt'],['showrooms','Showrooms','fa-building'],['partners','Partners','fa-users'],['pipeline','Pipeline','fa-chart-gantt'],['map','Map','fa-map'],['properties','Properties','fa-map-location-dot'],['insights','Insights','fa-chart-line'],['settings','Settings','fa-sliders'],['improvements',"What's New",'fa-clipboard-check']];
+  const navs=[['today','Today','fa-bolt'],['showrooms','Showrooms','fa-building'],['partners','Partners','fa-users'],['pipeline','Pipeline','fa-chart-gantt'],['map','Map','fa-map'],['properties','Properties','fa-map-location-dot'],['insights','Insights','fa-chart-line'],['zones','Zones & RMs','fa-sitemap'],['settings','Settings','fa-sliders'],['improvements',"What's New",'fa-clipboard-check']];
   navs.filter(n=>!q||n[1].toLowerCase().includes(q)).forEach(n=>cmdItems.push({type:'nav',label:n[1],icon:n[2],meta:'Navigate',fn:()=>{closeCmd();setView(n[0]);}}));
   if(q){
     S.showrooms.filter(s=>`${s.name} ${s.city}`.toLowerCase().includes(q)).slice(0,5).forEach(s=>cmdItems.push({type:'sr',label:s.name,icon:'fa-building',meta:`Showroom · ${s.city||''}`,fn:()=>{closeCmd();openSRDetail(s.id);}}));
@@ -2415,7 +2692,7 @@ function onData(){
 function stopRealtime(){unsubs.forEach(u=>{try{u();}catch(e){}});unsubs=[];}
 function startRealtime(){
   stopRealtime();updateSyncUI('syncing');
-  const mk=(coll,key)=>onSnapshot(collection(db,coll),snap=>{S[key]=snap.docs.map(d=>({id:d.id,...d.data()}));onData();},err=>{console.error(coll,err);updateSyncUI('stale');toast(`Sync error (${coll})`,'error');});
+  const mk=(coll,key)=>onSnapshot(collection(db,coll),snap=>{const fn=NORM[key]||(x=>x);S[key]=snap.docs.map(d=>{try{return fn({id:d.id,...d.data()});}catch(e){return{id:d.id,...d.data()};}});onData();},err=>{console.error(coll,err);updateSyncUI('stale');toast(`Sync error (${coll})`,'error');});
   unsubs.push(mk('showrooms','showrooms'));
   unsubs.push(mk('dealerOnboarding','dealers'));
   unsubs.push(mk('pipeline','pipeline'));
@@ -2455,13 +2732,16 @@ function showApp(){
 }
 
 /* ── WINDOW EXPOSURE (for inline handlers) ── */
-Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem});
+Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem,bulkReassignRM,bulkReassignZone,setDocLink,generateWeeklyReport});
 
 /* ── INIT / EVENT WIRING ── */
 document.addEventListener('DOMContentLoaded',()=>{
   if(location.protocol==='file:'){const w=document.getElementById('fileProtoWarn');if(w)w.style.display='block';}
   applyTheme(themeId);updateSoundIcon();
+  window.addEventListener('error',e=>{console.error('Uncaught:',e.error||e.message);if(firstLoad)toast('An error occurred — see console','error');});
+  window.addEventListener('unhandledrejection',e=>{console.error('Unhandled promise rejection:',e.reason);});
   const pls=document.getElementById('pl-stage');if(pls)pls.innerHTML=PL_STAGES.map(s=>`<option>${s}</option>`).join('');
+  ['sr-zone','dl-zone','pl-zone'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— Zone —</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');});
   document.querySelectorAll('.nav-btn,.bn-btn').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.view;if(v){setView(v);document.getElementById('sidebar')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('on');}}));
   document.getElementById('hamburger')?.addEventListener('click',()=>{document.getElementById('sidebar')?.classList.toggle('open');document.getElementById('overlay')?.classList.toggle('on');});
   document.getElementById('overlay')?.addEventListener('click',()=>{document.getElementById('sidebar')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('on');});
@@ -2476,7 +2756,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel')?.classList.remove('on');});
   document.getElementById('markAllRead')?.addEventListener('click',()=>{notifs.forEach(n=>n.read=true);renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
   document.getElementById('clearNotifs')?.addEventListener('click',()=>{notifs=[];renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
-  document.getElementById('addBtn')?.addEventListener('click',()=>{const v=view;if(v==='showrooms'){editSrId=null;resetForm('addSRModal');document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';openModal('addSRModal');}else if(v==='partners')openAddDL();else if(v==='pipeline'){resetForm('addPLModal');openModal('addPLModal');}else if(v==='properties'){resetForm('addPropModal');openModal('addPropModal');}});
+  document.getElementById('addBtn')?.addEventListener('click',()=>{const v=view;if(v==='showrooms'){editSrId=null;resetForm('addSRModal');fillTemplateSelect('standard');document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';openModal('addSRModal');}else if(v==='partners')openAddDL();else if(v==='pipeline'){resetForm('addPLModal');openModal('addPLModal');}else if(v==='properties'){resetForm('addPropModal');openModal('addPropModal');}});
   document.getElementById('addSRBtn')?.addEventListener('click',doAddSR);
   document.getElementById('addDLBtn')?.addEventListener('click',doAddDL);
   document.getElementById('addPLBtn')?.addEventListener('click',doAddPL);
@@ -2499,7 +2779,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('guestBtn')?.addEventListener('click',doGuestLogin);
   document.getElementById('signInNowBtn')?.addEventListener('click',doLogout);
   onAuthStateChanged(auth,async u=>{
-    if(u){uid=u.uid;email=u.email;isGuest=u.isAnonymous;if(isGuest)role='viewer';else await loadRole(u);showApp();startRealtime();}
+    if(u){uid=u.uid;email=u.email;isGuest=u.isAnonymous;if(isGuest)role='viewer';else await loadRole(u);await loadConfig();showApp();startRealtime();}
     else{stopRealtime();document.getElementById('app').style.display='none';document.getElementById('loginScreen').style.display='flex';uid=null;email=null;role=null;isGuest=false;firstLoad=false;notifyReady=false;prevSRM={};prevDLM={};}
   });
 });
