@@ -715,7 +715,7 @@ canvas{max-height:220px;}
         <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="sr-mobile" class="form-input" placeholder="+91 98765 43210"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">RM *</label><input type="text" id="sr-rm" class="form-input"></div>
+        <div class="form-group"><label class="form-label">RM *</label><select id="sr-rm" class="form-select"></select></div>
         <div class="form-group"><label class="form-label">Zone</label><select id="sr-zone" class="form-select"></select></div>
       </div>
       <div class="form-row">
@@ -746,7 +746,7 @@ canvas{max-height:220px;}
         <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="dl-mobile" class="form-input"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">RM *</label><input type="text" id="dl-rm" class="form-input"></div>
+        <div class="form-group"><label class="form-label">RM *</label><select id="dl-rm" class="form-select"></select></div>
         <div class="form-group"><label class="form-label">Start Date *</label><input type="date" id="dl-start" class="form-input"></div>
       </div>
       <div class="form-row">
@@ -775,7 +775,7 @@ canvas{max-height:220px;}
         <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="pl-mobile" class="form-input"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">RM *</label><input type="text" id="pl-rm" class="form-input"></div>
+        <div class="form-group"><label class="form-label">RM *</label><select id="pl-rm" class="form-select"></select></div>
         <div class="form-group"><label class="form-label">Stage</label><select id="pl-stage" class="form-select"></select></div>
       </div>
       <div class="form-row">
@@ -806,7 +806,7 @@ canvas{max-height:220px;}
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Ownership</label><select id="prop-own" class="form-select"><option>Rented</option><option>Owned</option><option>COCO</option><option>DOCO</option><option>Franchise</option></select></div>
-        <div class="form-group"><label class="form-label">RM</label><input type="text" id="prop-rm" class="form-input"></div>
+        <div class="form-group"><label class="form-label">RM</label><select id="prop-rm" class="form-select"></select></div>
       </div>
       <div class="form-group"><label class="form-label">Address</label><input type="text" id="prop-addr" class="form-input"></div>
       <div class="form-row">
@@ -898,7 +898,7 @@ function planDur(i){return i===0?PHASES[0].days:PHASES[i].days-PHASES[i-1].days;
 /* CONFIG-AS-DATA: tunable settings loaded from Firestore config/app at startup (admins edit in Settings).
    Per-showroom plan templates let a metro flagship and a small franchise be measured against different curves. */
 const DEFAULT_TEMPLATE={id:'standard',name:'Standard (90-day)',phases:PHASES.map(p=>p.days)};
-let CFG={followupDays:21,templates:[DEFAULT_TEMPLATE,{id:'fast',name:'Compact (60-day)',phases:[3,8,11,22,36,40,46,54,60]},{id:'flagship',name:'Flagship (120-day)',phases:[7,16,21,42,68,75,88,106,120]}]};
+let CFG={followupDays:21,rms:[],templates:[DEFAULT_TEMPLATE,{id:'fast',name:'Compact (60-day)',phases:[3,8,11,22,36,40,46,54,60]},{id:'flagship',name:'Flagship (120-day)',phases:[7,16,21,42,68,75,88,106,120]}]};
 function planArr(s){const t=(s&&s.templateId&&Array.isArray(CFG.templates))?CFG.templates.find(x=>x.id===s.templateId):null;return(t&&Array.isArray(t.phases)&&t.phases.length===PHASES.length)?t.phases:PHASES.map(p=>p.days);}
 function planTotal(s){const a=planArr(s);return a[a.length-1];}
 function planDurS(s,i){const a=planArr(s);return i===0?a[0]:a[i]-a[i-1];}
@@ -949,13 +949,14 @@ async function loadConfig(){
       if(c.stageTargets)STAGE_TARGETS={...STAGE_TARGETS,...c.stageTargets};
       if(typeof c.followupDays==='number')CFG.followupDays=c.followupDays;
       if(Array.isArray(c.templates)&&c.templates.length)CFG.templates=c.templates;
+      if(Array.isArray(c.rms))CFG.rms=c.rms;
     }
   }catch(e){console.warn('config load failed (using defaults):',e);}
 }
 async function saveConfig(){
   if(!isAdmin())return;
   try{
-    await setDoc(doc(db,'config','app'),{risk:RISK,stageTargets:STAGE_TARGETS,followupDays:CFG.followupDays,templates:CFG.templates,updatedAt:serverTimestamp(),updatedBy:email||'admin'},{merge:true});
+    await setDoc(doc(db,'config','app'),{risk:RISK,stageTargets:STAGE_TARGETS,followupDays:CFG.followupDays,templates:CFG.templates,rms:CFG.rms,updatedAt:serverTimestamp(),updatedBy:email||'admin'},{merge:true});
     toast('Settings saved — recalculating','success');renderView();
   }catch(e){toast('Save failed: '+e.message,'error');}
 }
@@ -973,7 +974,7 @@ let currentSrId=null,currentDlId=null,currentPlId=null;
 let editSrId=null,editDlId=null;
 let sound=localStorage.getItem('ais_sound')!=='off';
 let undoStack=[],cmdIdx=-1;
-let leafletMap=null,mapInitialized=false;
+let leafletMap=null,mapInitialized=false,mapFilter='all';
 let geminiKey=localStorage.getItem('ais_gemini_key')||'';
 /* IMPROVEMENT: per-render memo caches (perf + correctness on optimistic edits) */
 let _statsCache=new WeakMap();
@@ -1823,8 +1824,8 @@ function openSREdit(id){
   document.getElementById('sr-city').value=s.city||'';
   document.getElementById('sr-dealer').value=s.dealerName||'';
   document.getElementById('sr-mobile').value=s.mobileNumber||'';
-  document.getElementById('sr-rm').value=s.rm||'';
   const zsel=document.getElementById('sr-zone');if(zsel)zsel.value=s.zone||'';
+  fillRMSelect('sr-rm',s.rm||'','sr-zone');
   document.getElementById('sr-start').value=s.startDate||'';
   document.getElementById('sr-commit').value=s.committedDate||'';
   document.getElementById('sr-note').value=s.note||'';
@@ -1941,7 +1942,7 @@ function buildDLFullCard(d){
 }
 
 function isRejectStage(s){return s==='Shortlist-reject'||s==='CFT-Reject';}
-function openAddDL(){editDlId=null;resetForm('addDLModal');document.querySelector('#addDLModal .modal-title').textContent='Add Partner';document.getElementById('addDLBtn').innerHTML='<i class="fas fa-plus"></i> Create Partner';openModal('addDLModal');}
+function openAddDL(){editDlId=null;resetForm('addDLModal');fillRMSelect('dl-rm','','dl-zone');document.querySelector('#addDLModal .modal-title').textContent='Add Partner';document.getElementById('addDLBtn').innerHTML='<i class="fas fa-plus"></i> Create Partner';openModal('addDLModal');}
 function openDLDetail(id){
   const d=S.dealers.find(x=>x.id===id);if(!d)return;currentDlId=id;
   document.getElementById('dlDetailTitle').textContent=d.name;
@@ -2062,8 +2063,8 @@ function openDLEdit(id){
   document.getElementById('dl-firm').value=d.firmName||'';
   document.getElementById('dl-city').value=d.city||'';
   document.getElementById('dl-mobile').value=d.mobileNumber||'';
-  document.getElementById('dl-rm').value=d.rm||'';
   const dzsel=document.getElementById('dl-zone');if(dzsel)dzsel.value=d.zone||'';
+  fillRMSelect('dl-rm',d.rm||'','dl-zone');
   document.getElementById('dl-start').value=d.startDate||'';
   document.getElementById('dl-lat').value=d.lat||'';
   document.getElementById('dl-lng').value=d.lng||'';
@@ -2156,22 +2157,39 @@ function openPLDetail(id){
 }
 
 /* ── MAP VIEW ── */
-function mkIcon(color){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 0 2px ${color}66,0 2px 6px rgba(0,0,0,0.4)"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
+function mkIcon(color,approx){return L.divIcon({className:'',html:`<div style="width:16px;height:16px;border-radius:50%;background:${approx?'transparent':color};border:2px ${approx?'dashed':'solid'} ${approx?color:'#fff'};box-shadow:${approx?'none':'0 0 0 2px '+color+'66,0 2px 6px rgba(0,0,0,0.4)'};${approx?'outline:2px solid '+color+'44;':''}"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
+/* Built-in city → [lat,lng] table (Indian metros + tier-2/3) so records with only a city still plot,
+   with no external geocoding service required. Exact lat/lng on a record always wins. */
+const CITY_GEO={'delhi':[28.6139,77.209],'new delhi':[28.6139,77.209],'gurgaon':[28.4595,77.0266],'gurugram':[28.4595,77.0266],'noida':[28.5355,77.391],'greater noida':[28.4744,77.504],'faridabad':[28.4089,77.3178],'ghaziabad':[28.6692,77.4538],'mumbai':[19.076,72.8777],'navi mumbai':[19.033,73.0297],'thane':[19.2183,72.9781],'pune':[18.5204,73.8567],'bangalore':[12.9716,77.5946],'bengaluru':[12.9716,77.5946],'hyderabad':[17.385,78.4867],'secunderabad':[17.4399,78.4983],'chennai':[13.0827,80.2707],'kolkata':[22.5726,88.3639],'howrah':[22.5958,88.2636],'ahmedabad':[23.0225,72.5714],'surat':[21.1702,72.8311],'vadodara':[22.3072,73.1812],'baroda':[22.3072,73.1812],'rajkot':[22.3039,70.8022],'bhavnagar':[21.7645,72.1519],'jamnagar':[22.4707,70.0577],'gandhinagar':[23.2156,72.6369],'jaipur':[26.9124,75.7873],'jodhpur':[26.2389,73.0243],'udaipur':[24.5854,73.7125],'kota':[25.2138,75.8648],'ajmer':[26.4499,74.6399],'bikaner':[28.0229,73.3119],'lucknow':[26.8467,80.9462],'kanpur':[26.4499,80.3319],'varanasi':[25.3176,82.9739],'agra':[27.1767,78.0081],'meerut':[28.9845,77.7064],'allahabad':[25.4358,81.8463],'prayagraj':[25.4358,81.8463],'bareilly':[28.367,79.4304],'aligarh':[27.8974,78.088],'moradabad':[28.8386,78.7733],'gorakhpur':[26.7606,83.3732],'nagpur':[21.1458,79.0882],'indore':[22.7196,75.8577],'bhopal':[23.2599,77.4126],'gwalior':[26.2183,78.1828],'jabalpur':[23.1815,79.9864],'ujjain':[23.1765,75.7885],'raipur':[21.2514,81.6296],'bhilai':[21.1938,81.3509],'bilaspur':[22.0797,82.1409],'patna':[25.5941,85.1376],'ranchi':[23.3441,85.3096],'jamshedpur':[22.8046,86.2029],'dhanbad':[23.7957,86.4304],'bhubaneswar':[20.2961,85.8245],'cuttack':[20.4625,85.883],'rourkela':[22.2604,84.8536],'visakhapatnam':[17.6868,83.2185],'vizag':[17.6868,83.2185],'vijayawada':[16.5062,80.648],'guntur':[16.3067,80.4365],'nellore':[14.4426,79.9865],'tirupati':[13.6288,79.4192],'warangal':[17.9689,79.5941],'coimbatore':[11.0168,76.9558],'madurai':[9.9252,78.1198],'trichy':[10.7905,78.7047],'tiruchirappalli':[10.7905,78.7047],'salem':[11.6643,78.146],'pondicherry':[11.9416,79.8083],'puducherry':[11.9416,79.8083],'kochi':[9.9312,76.2673],'cochin':[9.9312,76.2673],'thiruvananthapuram':[8.5241,76.9366],'trivandrum':[8.5241,76.9366],'kozhikode':[11.2588,75.7804],'calicut':[11.2588,75.7804],'thrissur':[10.5276,76.2144],'kollam':[8.8932,76.6141],'mangalore':[12.9141,74.856],'mangaluru':[12.9141,74.856],'mysore':[12.2958,76.6394],'mysuru':[12.2958,76.6394],'hubli':[15.3647,75.124],'hubballi':[15.3647,75.124],'belgaum':[15.8497,74.4977],'belagavi':[15.8497,74.4977],'davangere':[14.4644,75.9218],'chandigarh':[30.7333,76.7794],'ludhiana':[30.901,75.8573],'amritsar':[31.634,74.8723],'jalandhar':[31.326,75.5762],'patiala':[30.3398,76.3869],'mohali':[30.7046,76.7179],'dehradun':[30.3165,78.0322],'haridwar':[29.9457,78.1642],'shimla':[31.1048,77.1734],'jammu':[32.7266,74.857],'srinagar':[34.0837,74.7973],'guwahati':[26.1445,91.7362],'siliguri':[26.7271,88.3953],'durgapur':[23.5204,87.3119],'asansol':[23.6739,86.9524],'nashik':[19.9975,73.7898],'aurangabad':[19.8762,75.3433],'nanded':[19.1383,77.321],'kolhapur':[16.705,74.2433],'solapur':[17.6599,75.9064],'amravati':[20.9374,77.7796],'panaji':[15.4909,73.8278],'goa':[15.4909,73.8278]};
+function jitter(seed){seed=String(seed||'');let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))>>>0;return[(((h%1000)/1000)-0.5)*0.07,((((h>>10)%1000)/1000)-0.5)*0.07];}
+function geoFor(r){
+  const la=parseFloat(r.lat),ln=parseFloat(r.lng);
+  if(isFinite(la)&&isFinite(ln))return{lat:la,lng:ln,approx:false};
+  const city=(r.city||'').toLowerCase().trim().replace(/[.,].*$/,'').trim();
+  if(!city)return null;
+  let g=CITY_GEO[city];
+  if(!g){const k=Object.keys(CITY_GEO).find(k=>k.length>=5&&city.includes(k));if(k)g=CITY_GEO[k];}
+  return g?{lat:g[0],lng:g[1],approx:true}:null;
+}
 function renderMap(){
   const c=document.getElementById('content');if(!c)return;
   if(leafletMap){try{leafletMap.remove();}catch(e){}leafletMap=null;}
+  const TABS=[['all','All'],['showrooms','Showrooms'],['Shortlisted','Shortlisted'],['CFT Selected','CFT Selected'],['Documentation','Documentation'],['Onboarded','Onboarded']];
   c.innerHTML=`
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" role="tablist" aria-label="Map filter">${TABS.map(([k,l])=>`<button class="map-tab btn btn-sm ${mapFilter===k?'btn-primary':'btn-outline'}" data-mapf="${esc(k)}" role="tab" aria-selected="${mapFilter===k}">${esc(l)}</button>`).join('')}</div>
   <div class="map-legend">
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-green)"></span>Showroom (on track / live)</div>
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-amber)"></span>Showroom (at risk)</div>
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-red)"></span>Showroom (critical)</div>
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-blue)"></span>Property</div>
     <div class="ml-item"><span class="ml-dot" style="background:var(--c-purple)"></span>Partner</div>
+    <div class="ml-item" style="opacity:0.75"><span class="ml-dot" style="background:transparent;border:2px dashed var(--c-text2)"></span>Approx (placed by city)</div>
   </div>
   <div id="mapMsg" style="display:none;margin-bottom:12px;padding:11px 14px;border-radius:var(--r-md);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.45);color:var(--c-amber);font-size:0.8rem;line-height:1.5"></div>
   <div id="mapContainer"></div>
   <div class="sh"><div><span class="sh-title">Geographic Distribution</span></div></div>
   <div style="font-size:0.78rem;color:var(--c-text2)" id="mapStats"></div>`;
+  c.querySelectorAll('.map-tab').forEach(b=>b.addEventListener('click',()=>{mapFilter=b.dataset.mapf;renderMap();}));
   setTimeout(()=>{
     const el=document.getElementById('mapContainer');
     if(!el){return;}
@@ -2189,10 +2207,15 @@ function renderMap(){
         t.addTo(leafletMap);};
       /* primary: dark basemap (CARTO); auto-fallback: standard OSM tiles */
       addTiles('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',attribution:'© OpenStreetMap, © CARTO',maxZoom:20});
-      const pts=[];let plotted=0;
-      S.showrooms.forEach(s=>{const la=parseFloat(s.lat),ln=parseFloat(s.lng);if(isFinite(la)&&isFinite(ln)){const lvl=srLevel(s);const col=lvl==='critical'?'#EF4444':lvl==='warning'?'#F59E0B':'#10B981';L.marker([la,ln],{icon:mkIcon(col)}).addTo(leafletMap).bindPopup(`<b>${esc(s.name)}</b><br>${esc(s.city||'')} · ${isSRDone(s)?'Live':srStats(s).pctW+'% complete'}`);pts.push([la,ln]);plotted++;}});
-      S.properties.forEach(p=>{const la=parseFloat(p.lat),ln=parseFloat(p.lng);if(isFinite(la)&&isFinite(ln)){L.marker([la,ln],{icon:mkIcon('#3B82F6')}).addTo(leafletMap).bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.city||'')} · ${esc(p.status||'')}`);pts.push([la,ln]);plotted++;}});
-      S.dealers.forEach(d=>{const la=parseFloat(d.lat),ln=parseFloat(d.lng);if(isFinite(la)&&isFinite(ln)){L.marker([la,ln],{icon:mkIcon('#8B5CF6')}).addTo(leafletMap).bindPopup(`<b>${esc(d.name)}</b><br>${esc(d.city||'')} · ${esc(d.currentStage||'')}`);pts.push([la,ln]);plotted++;}});
+      const pts=[];let plotted=0,approxN=0;
+      const plot=(rec,col,popup)=>{const g=geoFor(rec);if(!g)return;let la=g.lat,ln=g.lng;if(g.approx){const j=jitter(rec.id||rec.name);la+=j[0];ln+=j[1];}L.marker([la,ln],{icon:mkIcon(col,g.approx)}).addTo(leafletMap).bindPopup(popup+(g.approx?'<br><span style="opacity:0.6;font-size:0.85em">approx · city level</span>':''));pts.push([la,ln]);plotted++;if(g.approx)approxN++;};
+      const dealerStage=['Shortlisted','CFT Selected','Documentation','Onboarded'].includes(mapFilter)?mapFilter:null;
+      const showSR=mapFilter==='all'||mapFilter==='showrooms';
+      const showProp=mapFilter==='all';
+      const showDL=mapFilter==='all'||!!dealerStage;
+      if(showSR)S.showrooms.forEach(s=>{const lvl=srLevel(s);const col=lvl==='critical'?'#EF4444':lvl==='warning'?'#F59E0B':'#10B981';plot(s,col,`<b>${esc(s.name)}</b><br>${esc(s.city||'')} · ${isSRDone(s)?'Live':srStats(s).pctW+'% complete'}`);});
+      if(showProp)S.properties.forEach(p=>plot(p,'#3B82F6',`<b>${esc(p.name)}</b><br>${esc(p.city||'')} · ${esc(p.status||'')}`));
+      if(showDL)S.dealers.filter(d=>dealerStage?((d.currentStage||'Interested')===dealerStage):true).forEach(d=>plot(d,'#8B5CF6',`<b>${esc(d.name)}</b><br>${esc(d.city||'')} · ${esc(d.currentStage||'')}`));
       /* KEY FIX: the container was just inserted, so Leaflet cached a wrong size and never
          requested tiles. Recalculate once it has painted, THEN fit to the markers. */
       const fit=()=>{if(!leafletMap)return;try{leafletMap.invalidateSize();if(pts.length)leafletMap.fitBounds(pts,{padding:[40,40],maxZoom:10});}catch(e){}};
@@ -2200,7 +2223,8 @@ function renderMap(){
       setTimeout(fit,350);
       /* self-diagnose: if NO tiles loaded after a few seconds, the network is almost certainly blocking the tile servers */
       setTimeout(()=>{if(!tilesOK&&view==='map'&&leafletMap){showMsg('<b>Map tiles could not load.</b> The map and your pins are working, but the background tiles were blocked — usually a corporate firewall blocking <code>basemaps.cartocdn.com</code> and <code>tile.openstreetmap.org</code>. Ask IT to allow those, or open the app on a network that permits them. The rest of the dashboard is unaffected.');}},5000);
-      const ms=document.getElementById('mapStats');if(ms)ms.textContent=`${plotted} location${plotted!==1?'s':''} plotted. ${S.showrooms.length+S.properties.length+S.dealers.length-plotted} record(s) missing coordinates.`;
+      const considered=(showSR?S.showrooms.length:0)+(showProp?S.properties.length:0)+(showDL?(dealerStage?S.dealers.filter(d=>(d.currentStage||'Interested')===dealerStage).length:S.dealers.length):0);
+      const ms=document.getElementById('mapStats');if(ms)ms.innerHTML=`${plotted} of ${considered} shown${mapFilter!=='all'?` · filter: ${esc(TABS.find(t=>t[0]===mapFilter)?.[1]||mapFilter)}`:''}${approxN?` · <span style="color:var(--c-amber)">${approxN} placed approximately by city (hollow pins)</span>`:''}${considered-plotted>0?` · ${considered-plotted} not shown (no coordinates and city not recognised)`:''}.`;
     }catch(e){console.warn('Map error',e);el.innerHTML='<div style="padding:30px;text-align:center;color:var(--c-text3);font-size:0.82rem">Could not initialise the map: '+esc(e.message)+'</div>';}
   },120);
 }
@@ -2370,6 +2394,47 @@ function renderDataQuality(){
 }
 
 /* ── SETTINGS VIEW ── */
+/* ── RM MANAGER (Settings) ── */
+let _rmDraft=[];
+function _rmDataCount(v){return [...S.showrooms,...S.dealers,...S.pipeline,...S.properties].filter(r=>String(r.rm||'').trim()===v).length;}
+function renderRMManager(){
+  const body=document.getElementById('rmManagerBody');if(!body)return;
+  if(!_rmDraft.length){
+    body.innerHTML='<div style="color:var(--c-text3);font-size:0.8rem;padding:6px 0">No RMs yet. Add one, or import the names already used in your records.</div>';
+  }else{
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">${_rmDraft.map((r,i)=>`<div style="display:flex;gap:8px;align-items:center"><input class="form-input rm-name" data-i="${i}" value="${esc(r.name||'')}" placeholder="RM name" style="flex:1"><select class="form-select rm-zone" data-i="${i}" style="max-width:170px"><option value="">— Zone —</option>${ZONES.map(z=>`<option ${r.zone===z?'selected':''}>${esc(z)}</option>`).join('')}</select><button class="btn btn-ghost btn-sm rm-del" data-i="${i}" title="Remove" style="color:var(--c-red)"><i class="fas fa-trash"></i></button></div>`).join('')}</div>`;
+  }
+  body.querySelectorAll('.rm-name').forEach(inp=>inp.addEventListener('input',()=>{_rmDraft[+inp.dataset.i].name=inp.value;}));
+  body.querySelectorAll('.rm-zone').forEach(sel=>sel.addEventListener('change',()=>{_rmDraft[+sel.dataset.i].zone=sel.value;}));
+  body.querySelectorAll('.rm-del').forEach(b=>b.addEventListener('click',()=>{_rmDraft.splice(+b.dataset.i,1);renderRMManager();}));
+  renderRMRemap();
+}
+function renderRMRemap(){
+  const wrap=document.getElementById('rmRemapWrap');if(!wrap)return;
+  const canon=_rmDraft.map(r=>(r.name||'').trim()).filter(Boolean);
+  const variants=allRmInData().filter(v=>!canon.includes(v));
+  if(!variants.length){wrap.innerHTML=canon.length?'<div style="font-size:0.74rem;color:var(--c-green)"><i class="fas fa-circle-check"></i> Every RM in your records matches the list above.</div>':'';return;}
+  wrap.innerHTML=`<div style="border-top:1px solid var(--c-border);padding-top:12px">
+    <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin-bottom:6px">Clean up existing records</div>
+    <div style="font-size:0.74rem;color:var(--c-text2);margin-bottom:10px">${variants.length} RM name(s) in your records don't match the list above (usually spelling variants). Map each to the right RM, then apply — this rewrites every matching showroom, partner, lead and property (and sets the RM's zone where defined). Save your RM list first so the targets appear below.</div>
+    ${variants.map(v=>`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><span style="flex:1;min-width:140px;font-size:0.8rem"><code>${esc(v)}</code> <span style="color:var(--c-text3)">· ${_rmDataCount(v)} record${_rmDataCount(v)!==1?'s':''}</span></span><i class="fas fa-arrow-right" style="color:var(--c-text3);font-size:0.7rem"></i><select class="form-select rm-map" data-v="${esc(v)}" style="max-width:210px"><option value="">— keep as is —</option>${canon.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div>`).join('')}
+    <button class="btn btn-outline btn-sm" id="rmApplyRemapBtn" style="margin-top:6px"${canon.length?'':' disabled'}><i class="fas fa-wand-magic-sparkles"></i> Apply remap to records</button>
+  </div>`;
+  document.getElementById('rmApplyRemapBtn')?.addEventListener('click',applyRMRemap);
+}
+async function applyRMRemap(){
+  if(!isAdmin())return;
+  const maps=[...document.querySelectorAll('.rm-map')].map(s=>({from:s.dataset.v,to:s.value})).filter(m=>m.to&&m.to!==m.from);
+  if(!maps.length){toast('Choose at least one mapping','warning');return;}
+  const total=maps.reduce((a,m)=>a+_rmDataCount(m.from),0);
+  if(!await showConfirm(`Update ${total} record(s) across all sections, rewriting their RM to the chosen names? This can't be undone in bulk.`,'Apply RM remap'))return;
+  const batch=writeBatch(db);let n=0;
+  const apply=(arr,coll)=>arr.forEach(r=>{const m=maps.find(x=>x.from===String(r.rm||'').trim());if(m){const upd={rm:m.to,updatedAt:serverTimestamp()};const z=rmZone(m.to);if(z)upd.zone=z;batch.update(doc(db,coll,r.id),upd);n++;}});
+  apply(S.showrooms,'showrooms');apply(S.dealers,'dealerOnboarding');apply(S.pipeline,'pipeline');apply(S.properties,'properties');
+  try{await batch.commit();toast(`Remapped ${n} record(s)`,'success');renderSettings();}catch(e){toast('Remap failed: '+e.message,'error');}
+}
+
+/* ── SETTINGS VIEW ── */
 function renderSettings(){
   const c=document.getElementById('content');if(!c)return;
   c.innerHTML=`
@@ -2399,6 +2464,16 @@ function renderSettings(){
       <h3><i class="fas fa-heart-pulse"></i> Data Health</h3>
       <div id="dqPanel">${renderDataQuality()}</div>
     </div>
+    ${isAdmin()?`<div class="setting-card" style="grid-column:1/-1">
+      <h3><i class="fas fa-user-tie"></i> Field Reps (RM) <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— this list feeds the RM dropdown on every form; each RM can carry a zone that auto-fills</span></h3>
+      <div id="rmManagerBody"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn btn-outline btn-sm" id="rmAddBtn"><i class="fas fa-plus"></i> Add RM</button>
+        <button class="btn btn-outline btn-sm" id="rmImportBtn"><i class="fas fa-file-import"></i> Import names from records</button>
+        <button class="btn btn-primary btn-sm" id="rmSaveBtn"><i class="fas fa-save"></i> Save RM list</button>
+      </div>
+      <div id="rmRemapWrap" style="margin-top:16px"></div>
+    </div>`:''}
     ${isAdmin()?`<div class="setting-card" style="grid-column:1/-1">
       <h3><i class="fas fa-sliders"></i> SLA &amp; Thresholds <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500;text-transform:none">— tune the KPI without code; saved to Firestore for everyone</span></h3>
       <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin:6px 0 8px">Risk triggers (days)</div>
@@ -2436,6 +2511,18 @@ function renderSettings(){
   document.getElementById('notifToggle')?.addEventListener('click',async e=>{if(Notification?.permission!=='granted'){const p=await Notification.requestPermission();e.target.classList.toggle('on',p==='granted');toast(p==='granted'?'Notifications enabled':'Notifications blocked',p==='granted'?'success':'warning');}else toast('Manage in browser settings','info');});
   document.getElementById('csvImportBtn')?.addEventListener('click',()=>document.getElementById('csvImportInput').click());
   document.getElementById('csvImportInput')?.addEventListener('change',handleCSVImport);
+  /* RM manager */
+  if(isAdmin()){
+    _rmDraft=JSON.parse(JSON.stringify(CFG.rms||[]));
+    renderRMManager();
+    document.getElementById('rmAddBtn')?.addEventListener('click',()=>{_rmDraft.push({name:'',zone:''});renderRMManager();});
+    document.getElementById('rmImportBtn')?.addEventListener('click',()=>{const have=_rmDraft.map(r=>(r.name||'').trim());let added=0;allRmInData().forEach(v=>{if(!have.includes(v)){_rmDraft.push({name:v,zone:''});added++;}});renderRMManager();toast(added?`Imported ${added} name(s) — review and save`:'No new names to import','info');});
+    document.getElementById('rmSaveBtn')?.addEventListener('click',()=>{
+      const seen=new Set();const clean=[];
+      _rmDraft.forEach(r=>{const nm=(r.name||'').trim();if(!nm)return;const k=nm.toLowerCase();if(seen.has(k))return;seen.add(k);clean.push({name:nm,zone:r.zone||''});});
+      CFG.rms=clean;saveConfig();
+    });
+  }
   document.getElementById('cfgSaveBtn')?.addEventListener('click',()=>{
     const num=(id,fallback)=>{const v=parseInt(document.getElementById(id)?.value);return isNaN(v)?fallback:v;};
     RISK={critOverdue:num('cfg-critOverdue',RISK.critOverdue),warnOverdue:num('cfg-warnOverdue',RISK.warnOverdue),critProjMiss:num('cfg-critProjMiss',RISK.critProjMiss),warnProjMiss:num('cfg-warnProjMiss',RISK.warnProjMiss)};
@@ -2451,6 +2538,8 @@ function renderSettings(){
 /* ── WHAT'S NEW / IMPROVEMENTS VIEW ── */
 const IMPROVEMENTS=[
   {group:'v8.0 — utility & sustainability wave',ico:'fa-rocket',col:'#10B981',items:[
+    {t:'Managed RM list with zones',badge:'done',d:'A Field Reps (RM) manager in Settings — add/remove RMs, give each a zone. Every RM field on every form is now a dropdown fed by this list (no more spelling drift), and picking an RM auto-fills the zone. Includes a one-click "import names from records" and a clean-up tool that remaps misspelt RM variants onto the right name across all records.'},
+    {t:'Map filter tabs',badge:'done',d:'The map now has tabs — All, Showrooms, and the partner stages Shortlisted / CFT Selected / Documentation / Onboarded — to plot just the set you care about. Records still plot by city when they have no exact coordinates (hollow pins).'},
     {t:'Editable SLAs & thresholds (no code)',badge:'done',d:'Admins can tune the risk triggers, partner stage targets, and follow-up window from Settings → SLA & Thresholds. Saved to Firestore and applied on every device, instantly re-scoring all showrooms and partners.'},
     {t:'Per-showroom plan templates',badge:'done',d:'A metro flagship and a small franchise can be measured against different schedules. Pick a template (Standard 90-day, Compact 60-day, Flagship 120-day, or your own) per showroom; all progress, forecast, gantt and risk math follow that curve.'},
     {t:'Zones & RM scorecards',badge:'done',d:'A new view rolls performance up by zone (health, active sites, average progress, partners, leads) and ranks every RM by critical sites and average delay. Records carry an optional zone.'},
@@ -2596,6 +2685,21 @@ async function handleCSVImport(e){
 /* ── ADD / EDIT ENTITIES ── */
 function reqd(ids){let ok=true;ids.forEach(id=>{const el=document.getElementById(id);if(el){if(!el.value.trim()){el.classList.add('input-error');ok=false;}else el.classList.remove('input-error');}});return ok;}
 function fillTemplateSelect(sel){const el=document.getElementById('sr-template');if(!el)return;el.innerHTML=CFG.templates.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('');el.value=sel||'standard';}
+/* ── RM (field rep) helpers ── */
+function rmNames(){return (CFG.rms||[]).map(r=>r.name).filter(Boolean);}
+function rmZone(name){const r=(CFG.rms||[]).find(x=>x.name===name);return r?r.zone||'':'';}
+function allRmInData(){const set=new Set();[...S.showrooms,...S.dealers,...S.pipeline,...S.properties].forEach(r=>{if(r.rm&&String(r.rm).trim())set.add(String(r.rm).trim());});return [...set];}
+/* populate an RM <select>; always keeps the record's current value selectable even if not in the managed list */
+function fillRMSelect(id,current,zoneTargetId){
+  const el=document.getElementById(id);if(!el)return;
+  const names=rmNames();
+  const opts=['<option value="">— Select RM —</option>'];
+  names.forEach(n=>opts.push(`<option value="${esc(n)}">${esc(n)}${rmZone(n)?' · '+esc(rmZone(n)):''}</option>`));
+  if(current&&!names.includes(current))opts.push(`<option value="${esc(current)}">${esc(current)} (unlisted)</option>`);
+  el.innerHTML=opts.join('');
+  el.value=current||'';
+  if(zoneTargetId){el.onchange=()=>{const z=rmZone(el.value);if(z){const zt=document.getElementById(zoneTargetId);if(zt)zt.value=z;}};}
+}
 async function doAddSR(){
   if(!isAdmin())return;
   if(!reqd(['sr-name','sr-city','sr-rm','sr-start'])){toast('Fill required fields','warning');return;}
@@ -2756,7 +2860,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel')?.classList.remove('on');});
   document.getElementById('markAllRead')?.addEventListener('click',()=>{notifs.forEach(n=>n.read=true);renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
   document.getElementById('clearNotifs')?.addEventListener('click',()=>{notifs=[];renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
-  document.getElementById('addBtn')?.addEventListener('click',()=>{const v=view;if(v==='showrooms'){editSrId=null;resetForm('addSRModal');fillTemplateSelect('standard');document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';openModal('addSRModal');}else if(v==='partners')openAddDL();else if(v==='pipeline'){resetForm('addPLModal');openModal('addPLModal');}else if(v==='properties'){resetForm('addPropModal');openModal('addPropModal');}});
+  document.getElementById('addBtn')?.addEventListener('click',()=>{const v=view;if(v==='showrooms'){editSrId=null;resetForm('addSRModal');fillTemplateSelect('standard');fillRMSelect('sr-rm','','sr-zone');document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';openModal('addSRModal');}else if(v==='partners')openAddDL();else if(v==='pipeline'){resetForm('addPLModal');fillRMSelect('pl-rm','','pl-zone');openModal('addPLModal');}else if(v==='properties'){resetForm('addPropModal');fillRMSelect('prop-rm','',null);openModal('addPropModal');}});
   document.getElementById('addSRBtn')?.addEventListener('click',doAddSR);
   document.getElementById('addDLBtn')?.addEventListener('click',doAddDL);
   document.getElementById('addPLBtn')?.addEventListener('click',doAddPL);
