@@ -547,7 +547,7 @@ canvas{max-height:220px;}
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <div class="brand">
-<div class="brand-icon"></div>
+      <div class="brand-icon"><img src="https://www.aiswindows.com/assets/images/ais-windows-logo.svg" alt="AIS"></div>
       <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v8.0</div></div>
     </div>
   </div>
@@ -677,6 +677,7 @@ canvas{max-height:220px;}
     </div>
     <div class="modal-body" id="srDetailBody"></div>
     <div class="modal-foot">
+      <button class="btn btn-sm wa-btn" id="srNudgeBtn" style="background:#25D366;border-color:#25D366;color:#fff"><i class="fas fa-paper-plane"></i> Nudge</button>
       <button class="btn btn-ghost btn-sm" id="srEditBtn" style="display:none"><i class="fas fa-pen"></i> Edit</button>
       <button class="btn btn-danger btn-sm" id="srDelBtn" style="display:none"><i class="fas fa-trash"></i> Delete</button>
       <button class="btn btn-outline btn-sm" data-close="srDetailModal">Close</button>
@@ -695,6 +696,7 @@ canvas{max-height:220px;}
     </div>
     <div class="modal-body" id="dlDetailBody"></div>
     <div class="modal-foot">
+      <button class="btn btn-sm wa-btn" id="dlNudgeBtn" style="background:#25D366;border-color:#25D366;color:#fff"><i class="fas fa-paper-plane"></i> Nudge</button>
       <button class="btn btn-ghost btn-sm" id="dlEditBtn" style="display:none"><i class="fas fa-pen"></i> Edit</button>
       <button class="btn btn-danger btn-sm" id="dlDelBtn" style="display:none"><i class="fas fa-trash"></i> Delete</button>
       <button class="btn btn-outline btn-sm" data-close="dlDetailModal">Close</button>
@@ -844,6 +846,27 @@ canvas{max-height:220px;}
     <div class="modal-head"><span class="modal-title" id="confirmTitle">Confirm</span><button class="modal-close" id="confirmCloseBtn">×</button></div>
     <div class="modal-body"><p id="confirmMsg" style="font-size:0.88rem;color:var(--c-text2)"></p></div>
     <div class="modal-foot"><button class="btn btn-outline" id="confirmCancelBtn">Cancel</button><button class="btn btn-primary" id="confirmOkBtn">Confirm</button></div>
+  </div>
+</div>
+
+<div class="modal" id="nudgeModal" role="dialog" aria-modal="true">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-head"><span class="modal-title"><i class="fas fa-paper-plane" style="margin-right:7px;color:var(--c-blue)"></i>Send a nudge</span><button class="modal-close" onclick="closeModal('nudgeModal')">×</button></div>
+    <div class="modal-body">
+      <div id="nudgeSub" style="font-size:0.8rem;color:var(--c-text2);margin-bottom:12px"></div>
+      <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin-bottom:6px">Tone</div>
+      <div id="nudgeTones" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-sm nudge-tone" data-tone="gentle"><i class="fas fa-hand"></i> Gentle</button>
+        <button class="btn btn-sm nudge-tone" data-tone="firm"><i class="fas fa-stopwatch"></i> Firm</button>
+        <button class="btn btn-sm nudge-tone" data-tone="escalate"><i class="fas fa-triangle-exclamation"></i> Escalate</button>
+      </div>
+      <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin-bottom:6px">Message <span style="font-weight:500;text-transform:none">(editable)</span></div>
+      <textarea id="nudgeText" class="form-textarea" rows="7" style="font-size:0.84rem;line-height:1.5"></textarea>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span id="nudgeTo" style="font-size:0.72rem;color:var(--c-text3)"></span>
+      <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" id="nudgeCopyBtn"><i class="fas fa-copy"></i> Copy</button><button class="btn btn-primary btn-sm wa-btn" id="nudgeWaBtn" style="background:#25D366;border-color:#25D366"><i class="fab fa-whatsapp"></i> WhatsApp</button></div>
+    </div>
   </div>
 </div>
 
@@ -1031,7 +1054,15 @@ function isDLRej(d){return d.currentStage==='Shortlist-reject'||d.currentStage==
 function activeSR(){return S.showrooms.filter(s=>!isSRDone(s));}
 function activeDL(){return S.dealers.filter(d=>!isDLDone(d)&&!isDLRej(d));}
 function docPct(d){return Math.round((DOC_KEYS.filter(k=>d?.[k]).length/DOC_KEYS.length)*100);}
+function missingDocs(d){return DOC_KEYS.filter(k=>!d?.documents?.[k]).map(k=>DOC_LABELS[k]);}
 function waLink(mobile,msg){return`https://wa.me/${(mobile||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg||'')}`;}
+/* ── SNOOZE (keep the action feed focused) ── */
+function getSnoozes(){try{return JSON.parse(localStorage.getItem('ais_snoozes')||'{}');}catch(e){return{};}}
+function setSnoozes(o){try{localStorage.setItem('ais_snoozes',JSON.stringify(o));}catch(e){}}
+function actionKey(a){return a.type+':'+(a.entity?.id||a.title);}
+function isSnoozed(a){const s=getSnoozes()[actionKey(a)];return s&&new Date(s).getTime()>Date.now();}
+function snoozeAction(a,days){const s=getSnoozes();const d=new Date();d.setDate(d.getDate()+days);s[actionKey(a)]=d.toISOString();setSnoozes(s);toast(`Snoozed ${days}d`,'info');renderView();}
+function clearSnoozes(){setSnoozes({});toast('Snoozes cleared','info');renderView();}
 function startP(){const b=document.getElementById('nbar');if(b){b.style.display='block';}}
 function stopP(){const b=document.getElementById('nbar');if(b){b.style.display='none';}}
 
@@ -1225,8 +1256,47 @@ function phaseCycles(s){
     return{phase:p.name,id:p.id,plan:planDurS(s,i),actual,variance:actual-planDurS(s,i)};
   });
 }
+/* ── NUDGE COMPOSER (context-rich, tone-escalating chase messages) ── */
+let _nudge={tone:'gentle',opts:null};
+function openNudge(opts){
+  _nudge={tone:'gentle',opts:opts||{}};
+  const o=_nudge.opts,c=o.context||{};
+  const sub=document.getElementById('nudgeSub');if(sub)sub.innerHTML=`To <b>${esc(o.contact||o.name||'contact')}</b>${o.name&&o.contact?` · ${esc(o.name)}`:''}${c.city?` · ${esc(c.city)}`:''}${c.rm?` · RM ${esc(c.rm)}`:''}`;
+  const to=document.getElementById('nudgeTo');if(to)to.textContent=o.mobile?`Sends to ${o.mobile}`:'No mobile on file — use Copy';
+  updateNudgeTones();renderNudge();openModal('nudgeModal');
+}
+function updateNudgeTones(){document.querySelectorAll('.nudge-tone').forEach(b=>{b.className='btn btn-sm nudge-tone '+(b.dataset.tone===_nudge.tone?'btn-primary':'btn-outline');});}
+function renderNudge(){const t=document.getElementById('nudgeText');if(t)t.value=nudgeMessage();}
+function nudgeMessage(){
+  const o=_nudge.opts||{},c=o.context||{},tone=_nudge.tone;
+  const who=o.contact||o.name||'there';
+  const me=(email||'').split('@')[0]||'AIS Team';
+  const sign=`\n\n— ${me}, AIS Windows`;
+  if(o.kind==='sr'){
+    const phase=c.phase||'the current stage',days=c.days||0;
+    if(tone==='gentle')return `Hi ${who}, hope you're well. A quick check on ${o.name}: the "${phase}" stage is about ${days} day(s) behind plan. Could you share the latest status and an expected completion date?`+sign;
+    if(tone==='firm')return `Hi ${who}, regarding ${o.name} — the "${phase}" stage is now ${days} day(s) behind and is affecting the launch timeline. Please confirm a firm completion date today and tell me what support you need to close it.`+sign;
+    return `Hi ${who}, urgent escalation on ${o.name}. The "${phase}" stage is ${days} day(s) overdue${c.cascading?` and is blocking ${c.cascading} downstream stage(s)`:''}. Looping in RM ${c.rm||''}. We need a committed completion date by end of day and a recovery plan to protect the launch.`+sign;
+  }
+  if(o.kind==='dl'){
+    const miss=(c.missing||[]).slice(0,6).join(', '),dp=c.docPct||0;
+    if(tone==='gentle')return `Hi ${who}, your AIS partnership onboarding is ${dp}% complete. To move ahead we still need: ${miss||'a few documents'}. Could you share these when convenient? Happy to help if anything's unclear.`+sign;
+    if(tone==='firm')return `Hi ${who}, your AIS onboarding has been pending in "${c.stage}" for ${c.days||0} day(s). Please submit the remaining documents (${miss||'pending items'}) so we can complete your onboarding this week.`+sign;
+    return `Hi ${who}, your AIS onboarding is significantly delayed (${c.days||0} day(s) in "${c.stage}"). We risk pausing the application. Kindly share the pending documents — ${miss||'the outstanding items'} — within 2 days so we can proceed.`+sign;
+  }
+  if(o.kind==='dl-final'){const miss=(c.missing||[]).join(', ');return `Hi ${who}, great news — your AIS onboarding is almost done (${c.docPct||0}%)! Just ${miss||'a final document or two'} remaining. Share these and we'll complete your onboarding right away.`+sign;}
+  if(o.kind==='pl'){
+    if(tone==='gentle')return `Hi ${who}, following up on the AIS dealership opportunity in ${c.city||'your area'}. Are you still keen to explore it? Happy to answer any questions.`+sign;
+    if(tone==='firm')return `Hi ${who}, checking in on the AIS opportunity in ${c.city||'your area'}. To keep your application moving, could you confirm your interest and availability this week?`+sign;
+    return `Hi ${who}, we're closing the current expansion round for ${c.city||'your area'} soon. If you'd like to proceed with the AIS dealership, please let me know by this week so we can hold your spot.`+sign;
+  }
+  return `Hi ${who}, following up regarding ${o.name||'your AIS engagement'}.`+sign;
+}
+function nudgeFromSR(id){const s=S.showrooms.find(x=>x.id===id);if(!s)return;const st=srStats(s),b=st.blocking;openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:b?b.phase:'the current stage',days:b?b.days:(st.max||0),cascading:st.cascading,city:s.city,rm:s.rm}});}
+function nudgeFromDL(id){const d=S.dealers.find(x=>x.id===id);if(!d)return;const tl=dlTimeline(d);openNudge({kind:docPct(d.documents)>=80?'dl-final':'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}});}
+
 function buildActions(){
-  const actions=[];
+  const actions=[];const todayN=today0();
   /* Critical showrooms (predictive) */
   activeSR().forEach(s=>{
     const risk=srRisk(s);if(risk.level!=='critical')return;
@@ -1234,7 +1304,7 @@ function buildActions(){
     const desc=st.max>=RISK.critOverdue
       ? `${b?b.phase:'A phase'} is ${b?b.days:st.max}d behind${st.cascading?` (${st.cascading} more waiting)`:''}. Escalate now.`
       : `On pace to miss the committed date by ~${risk.projMiss}d. Intervene before it slips.`;
-    actions.push({priority:'critical',type:'sr-critical',title:`${s.name} — Critical`,desc,why:st.max>=RISK.critOverdue?`Bottleneck ${st.max}d > ${RISK.critOverdue}d`:`Projected miss ${risk.projMiss}d > ${RISK.critProjMiss}d`,entity:s,rm,tags:[{t:rm,c:'rm'},{t:(b?b.days:risk.projMiss)+'d',c:'phase'},{t:s.city,c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'WhatsApp CP',fn:()=>window.open(waLink(s.mobileNumber,`Hi, ${s.name} - phase '${b?b.phase:'phase'}' delayed ${b?b.days:0}d. Please coordinate with RM ${rm}.`),'_blank'),cls:'wa-btn'}]});
+    actions.push({priority:'critical',type:'sr-critical',title:`${s.name} — Critical`,desc,why:st.max>=RISK.critOverdue?`Bottleneck ${st.max}d > ${RISK.critOverdue}d`:`Projected miss ${risk.projMiss}d > ${RISK.critProjMiss}d`,entity:s,rm,tags:[{t:rm,c:'rm'},{t:(b?b.days:risk.projMiss)+'d',c:'phase'},{t:s.city,c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'Nudge',fn:()=>openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:b?b.phase:'the current stage',days:b?b.days:risk.projMiss,cascading:st.cascading,city:s.city,rm}}),cls:'wa-btn'}]});
   });
   /* Warning showrooms */
   activeSR().forEach(s=>{
@@ -1243,33 +1313,61 @@ function buildActions(){
     const desc=st.max>=RISK.warnOverdue
       ? `${b?b.phase:'A phase'} is falling behind (${b?b.days:st.max}d). Review with ${rm}.`
       : `Forecast trending ~${risk.projMiss}d past target. Watch closely.`;
-    actions.push({priority:'warning',type:'sr-warn',title:`${s.name} — ${st.max>=RISK.warnOverdue?st.max+'d Behind':'At Risk'}`,desc,why:st.max>=RISK.warnOverdue?`Bottleneck ${st.max}d > ${RISK.warnOverdue}d`:`Projected miss ${risk.projMiss}d`,entity:s,rm,tags:[{t:rm,c:'rm'},{t:(b?b.days:risk.projMiss)+'d',c:'phase'},{t:s.city,c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)}]});
+    actions.push({priority:'warning',type:'sr-warn',title:`${s.name} — ${st.max>=RISK.warnOverdue?st.max+'d Behind':'At Risk'}`,desc,why:st.max>=RISK.warnOverdue?`Bottleneck ${st.max}d > ${RISK.warnOverdue}d`:`Projected miss ${risk.projMiss}d`,entity:s,rm,tags:[{t:rm,c:'rm'},{t:(b?b.days:risk.projMiss)+'d',c:'phase'},{t:s.city,c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'Nudge',fn:()=>openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:b?b.phase:'the current stage',days:b?b.days:risk.projMiss,cascading:st.cascading,city:s.city,rm}}),cls:'wa-btn'}]});
+  });
+  /* LEADING INDICATOR — stalled showrooms (on-track by thresholds but silently not progressing) */
+  activeSR().forEach(s=>{
+    if(srLevel(s)!=='ok'||!s.startDate||isSRDone(s))return;
+    const ds=PHASES.map(p=>s.data?.[p.id]?.actualDate).filter(Boolean).map(x=>pd(x).getTime());
+    const last=ds.length?new Date(Math.max(...ds)):pd(s.startDate);
+    const idle=dayDiff(last,todayN);
+    if(idle>=14){
+      const bl=srStats(s).blocking;
+      actions.push({priority:'warning',type:'sr-stalled',title:`${s.name} — Stalled`,desc:`No phase completed in ${idle} days. Confirm work hasn't quietly stopped on site.`,why:`No progress ${idle}d ≥ 14d`,entity:s,rm:s.rm||'Unassigned',tags:[{t:s.rm||'—',c:'rm'},{t:idle+'d idle',c:'phase'},{t:s.city,c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'Nudge',fn:()=>openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:bl?bl.phase:'the current stage',days:idle,city:s.city,rm:s.rm}}),cls:'wa-btn'}]});
+    }
+  });
+  /* LEADING INDICATOR — upcoming milestone within 5 days (keep momentum) */
+  activeSR().forEach(s=>{
+    if(srLevel(s)!=='ok'||!s.startDate||isSRDone(s))return;
+    const plan=planArr(s),start=pd(s.startDate);
+    let ni=-1;for(let i=0;i<PHASES.length;i++){if(!s.data?.[PHASES[i].id]?.actualDate){ni=i;break;}}
+    if(ni<0)return;
+    const tgt=new Date(start);tgt.setDate(start.getDate()+plan[ni]);const dd=dayDiff(todayN,tgt);
+    if(dd>=0&&dd<=5){
+      actions.push({priority:'info',type:'sr-soon',title:`${s.name} — Milestone in ${dd===0?'today':dd+'d'}`,desc:`"${PHASES[ni].name}" is due ${dd===0?'today':'in '+dd+' day(s)'}. A quick check-in now keeps it on track.`,entity:s,rm:s.rm||'Unassigned',tags:[{t:s.rm||'—',c:'rm'},{t:PHASES[ni].name,c:'phase'},{t:'due '+(dd===0?'today':dd+'d'),c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'Nudge',fn:()=>openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:PHASES[ni].name,days:0,city:s.city,rm:s.rm}}),cls:'wa-btn'}]});
+    }
   });
   /* Critical dealers */
   activeDL().forEach(d=>{
     const tl=dlTimeline(d);if(tl.level==='critical'){
-      actions.push({priority:'critical',type:'dl-critical',title:`${d.name} — Partner Stuck`,desc:`In "${d.currentStage}" for ${tl.elapsed}d (target ${tl.tgt}d). ${100-docPct(d.documents)}% docs pending.`,why:`Stage delay ${tl.delay}d > 10d threshold`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d late',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'WhatsApp CP',fn:()=>window.open(waLink(d.mobileNumber,`Hi ${d.name}, please submit pending documents for your AIS partnership. Docs: ${docPct(d.documents)}% complete.`),'_blank'),cls:'wa-btn'}]});
+      actions.push({priority:'critical',type:'dl-critical',title:`${d.name} — Partner Stuck`,desc:`In "${d.currentStage}" for ${tl.elapsed}d (target ${tl.tgt}d). ${100-docPct(d.documents)}% docs pending.`,why:`Stage delay ${tl.delay}d > 10d threshold`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d late',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
+    }
+  });
+  /* LEADING INDICATOR — partners slowing in a stage (warning, before they go critical) */
+  activeDL().forEach(d=>{
+    const tl=dlTimeline(d);if(tl.level==='warning'&&docPct(d.documents)<80){
+      actions.push({priority:'warning',type:'dl-warn',title:`${d.name} — Slowing in ${d.currentStage}`,desc:`${tl.elapsed}d in "${d.currentStage}" (target ${tl.tgt}d), ${100-docPct(d.documents)}% docs pending. Nudge before it stalls.`,why:`Stage delay ${tl.delay}d`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d over',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
     }
   });
   /* Near-completion dealers */
   activeDL().forEach(d=>{
     const dp=docPct(d.documents);if(dp>=80&&dp<100&&!isDLRej(d)){
-      actions.push({priority:'info',type:'dl-docs',title:`${d.name} — Almost Complete`,desc:`${dp}% docs done. One final push for onboarding.`,why:`Docs ≥80% — near completion`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:dp+'% docs',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Checklist',fn:()=>openDLDetail(d.id)},{label:'WhatsApp CP',fn:()=>window.open(waLink(d.mobileNumber,`Hi ${d.name}, just ${100-dp}% more docs needed to complete your AIS partnership onboarding!`),'_blank'),cls:'wa-btn'}]});
+      actions.push({priority:'info',type:'dl-docs',title:`${d.name} — Almost Complete`,desc:`${dp}% docs done. One final push for onboarding.`,why:`Docs ≥80% — near completion`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:dp+'% docs',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Checklist',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl-final',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:dp,missing:missingDocs(d),stage:d.currentStage,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
     }
   });
   /* Follow-ups due (explicit reminder dates) */
   S.pipeline.forEach(p=>{
     if(!p.followupDate||p.stage==='Live')return;
-    const due=dayDiff(today0(),p.followupDate); /* <=0 means due/overdue */
+    const due=dayDiff(today0(),p.followupDate);
     if(due<=0){
-      actions.push({priority:'warning',type:'pl-followup',title:`Follow-up due: ${p.name}`,desc:`Follow-up was set for ${fmtDateShort(p.followupDate)}${due<0?` (${-due}d overdue)`:' (today)'}.`,why:'Reminder date reached',entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:due<0?(-due)+'d overdue':'today',c:'phase'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'WhatsApp',fn:()=>window.open(waLink(p.mobile,`Hi ${p.contact||p.name}, following up regarding the AIS opportunity in ${p.city}.`),'_blank'),cls:'wa-btn'}]});
+      actions.push({priority:'warning',type:'pl-followup',title:`Follow-up due: ${p.name}`,desc:`Follow-up was set for ${fmtDateShort(p.followupDate)}${due<0?` (${-due}d overdue)`:' (today)'}.`,why:'Reminder date reached',entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:due<0?(-due)+'d overdue':'today',c:'phase'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'Nudge',fn:()=>openNudge({kind:'pl',id:p.id,name:p.name,mobile:p.mobile,contact:p.contact,context:{city:p.city,stage:p.stage,rm:p.rm}}),cls:'wa-btn'}]});
     }
   });
   /* Old leads in pipeline */
   S.pipeline.forEach(p=>{
     const age=p.createdAt?Math.max(0,dayDiff(pd(p.createdAt),today0())):0;
     if(age>CFG.followupDays&&p.stage!=='Live'&&!p.followupDate){
-      actions.push({priority:'warning',type:'pl-stale',title:`Pipeline Lead: ${p.name}`,desc:`In "${p.stage}" for ${age} days. Follow up required.`,why:`Age ${age}d > 21d follow-up threshold`,entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:age+'d old',c:'age'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'WhatsApp Lead',fn:()=>window.open(waLink(p.mobile,`Hi ${p.contact||p.name}, following up on the AIS expansion opportunity for ${p.city}. Are you still interested?`),'_blank'),cls:'wa-btn'}]});
+      actions.push({priority:'warning',type:'pl-stale',title:`Pipeline Lead: ${p.name}`,desc:`In "${p.stage}" for ${age} days. Follow up required.`,why:`Age ${age}d > ${CFG.followupDays}d follow-up threshold`,entity:p,rm:p.rm||'Unassigned',tags:[{t:p.rm||'—',c:'rm'},{t:age+'d old',c:'age'},{t:p.city,c:'age'}],actions:[{label:'Open Lead',fn:()=>openPLDetail(p.id)},{label:'Nudge',fn:()=>openNudge({kind:'pl',id:p.id,name:p.name,mobile:p.mobile,contact:p.contact,context:{city:p.city,stage:p.stage,rm:p.rm}}),cls:'wa-btn'}]});
     }
   });
   /* On-track items */
@@ -1329,6 +1427,8 @@ function renderView(){
 function renderToday(){
   const c=document.getElementById('content');if(!c)return;
   const actions=buildActions();
+  const acts=actions.filter(a=>!isSnoozed(a));acts.forEach((a,i)=>a._gi=i);
+  const snoozedCount=actions.length-acts.length;
   const critSR=activeSR().filter(s=>srLevel(s)==='critical').length;
   const critDL=activeDL().filter(d=>dlTimeline(d).level==='critical').length;
   const warnSR=activeSR().filter(s=>srLevel(s)==='warning').length;
@@ -1338,7 +1438,7 @@ function renderToday(){
   <div class="today-header">
     <div class="today-date">${days[today.getDay()]}, ${today.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
     <div class="today-title">${critSR+critDL>0?`⚠️ ${critSR+critDL} item${critSR+critDL>1?'s':''} need attention`:'✅ Operations running smoothly'}</div>
-    <div class="today-sub">${actions.length} action${actions.length!==1?'s':''} in your feed today</div>
+    <div class="today-sub">${acts.length} action${acts.length!==1?'s':''} in your feed${snoozedCount?` · ${snoozedCount} snoozed`:''}</div>
     <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="generateWeeklyReport()"><i class="fas fa-file-lines"></i> Weekly Report</button>
   </div>
   <div class="today-kpis">
@@ -1372,22 +1472,29 @@ function renderToday(){
   <div class="action-feed" id="actionFeed"></div>`;
   renderAIBrief();
   const feed=document.getElementById('actionFeed');if(!feed)return;
-  if(!actions.length){feed.innerHTML=`<div class="empty-feed"><i class="fas fa-check-double"></i><h3>All clear!</h3><p>No pending actions. Great work.</p></div>`;return;}
+  if(!acts.length){feed.innerHTML=`<div class="empty-feed"><i class="fas fa-check-double"></i><h3>All clear!</h3><p>${snoozedCount?`No active actions (${snoozedCount} snoozed).`:'No pending actions. Great work.'}</p>${snoozedCount?'<button class="btn btn-ghost btn-sm" id="clearSnoozeBtn" style="margin-top:10px"><i class="fas fa-bell"></i> Show snoozed</button>':''}</div>`;document.getElementById('clearSnoozeBtn')?.addEventListener('click',clearSnoozes);return;}
   const groups={critical:[],warning:[],info:[],ok:[]};
-  actions.forEach(a=>groups[a.priority].push(a));
+  acts.forEach(a=>groups[a.priority].push(a));
+  const sec=(title,arr)=>arr.length?`<div class="af-section-title">${title} (${arr.length})</div>`+arr.map(a=>renderActionCard(a,a._gi)).join(''):'';
   let html='';
-  if(groups.critical.length)html+=`<div class="af-section-title">🚨 Critical — Needs Immediate Action (${groups.critical.length})</div>`+groups.critical.map(renderActionCard).join('');
-  if(groups.warning.length)html+=`<div class="af-section-title">⚠️ Warning — Review Today (${groups.warning.length})</div>`+groups.warning.map(renderActionCard).join('');
-  if(groups.info.length)html+=`<div class="af-section-title">💡 Opportunities (${groups.info.length})</div>`+groups.info.map(renderActionCard).join('');
-  if(groups.ok.length)html+=`<div class="af-section-title">✅ On Track (${groups.ok.length})</div>`+groups.ok.map(renderActionCard).join('');
+  html+=sec('🚨 Critical — Needs Immediate Action',groups.critical);
+  html+=sec('⚠️ Warning — Review Today',groups.warning);
+  html+=sec('💡 Opportunities & Upcoming',groups.info);
+  html+=sec('✅ On Track',groups.ok);
+  if(snoozedCount)html+=`<div style="text-align:center;margin-top:16px"><span style="font-size:0.74rem;color:var(--c-text3)">${snoozedCount} item${snoozedCount>1?'s':''} snoozed</span> · <button class="btn btn-ghost btn-sm" id="clearSnoozeBtn"><i class="fas fa-bell"></i> Show all</button></div>`;
   feed.innerHTML=html;
   feed.querySelectorAll('.ac-btn[data-aidx]').forEach(btn=>{
-    btn.addEventListener('click',e=>{e.stopPropagation();const ai=parseInt(btn.dataset.aidx),bi=parseInt(btn.dataset.bidx);actions[ai]?.actions[bi]?.fn?.();});
+    btn.addEventListener('click',e=>{e.stopPropagation();const ai=parseInt(btn.dataset.aidx),bi=parseInt(btn.dataset.bidx);acts[ai]?.actions[bi]?.fn?.();});
   });
+  feed.querySelectorAll('[data-snooze]').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();const ai=parseInt(btn.dataset.snooze);if(acts[ai])snoozeAction(acts[ai],7);});
+  });
+  document.getElementById('clearSnoozeBtn')?.addEventListener('click',clearSnoozes);
 }
 function renderActionCard(a,ai){
   const iconMap={critical:'fa-circle-exclamation',warning:'fa-triangle-exclamation',info:'fa-lightbulb',ok:'fa-circle-check'};
   const btnsHtml=a.actions.map((b,bi)=>`<button class="ac-btn${b.cls?' '+b.cls:''} btn-sm" data-aidx="${ai}" data-bidx="${bi}">${b.label}</button>`).join('');
+  const snoozeBtn=a.priority!=='ok'?`<button class="ac-btn btn-sm" data-snooze="${ai}" title="Snooze 7 days" style="padding:5px 9px;opacity:0.7"><i class="fas fa-clock"></i></button>`:'';
   const tagsHtml=a.tags.map(t=>`<span class="ac-tag ${t.c}">${esc(t.t)}</span>`).join('');
   return`<div class="action-card priority-${a.priority}" style="animation:fadeUp 300ms var(--ease) ${ai*40}ms both">
     <div class="ac-icon ${a.priority==='critical'||a.priority==='warning'?a.priority==='critical'?'crit':'warn':a.priority==='ok'?'ok':'info'}">
@@ -1399,7 +1506,7 @@ function renderActionCard(a,ai){
       ${a.why?`<div style="font-size:0.61rem;color:var(--c-text3);margin-top:2px;font-style:italic"><i class="fas fa-circle-info" style="opacity:0.5;margin-right:3px;font-size:0.58rem"></i>${esc(a.why)}</div>`:''}
       <div class="ac-meta">${tagsHtml}</div>
     </div>
-    <div class="ac-actions">${btnsHtml}</div>
+    <div class="ac-actions">${btnsHtml}${snoozeBtn}</div>
   </div>`;
 }
 
@@ -1797,7 +1904,13 @@ function _histDesc(l){
 function histRowHTML(l){const d=_histDate(l),by=_histBy(l);return`<div style="font-size:0.72rem;color:var(--c-text2);padding:8px 12px;border-bottom:1px solid var(--c-border);display:flex;justify-content:space-between;gap:12px;align-items:baseline"><span><i class="fas fa-circle" style="font-size:0.36rem;color:var(--c-blue);margin-right:7px;vertical-align:middle"></i>${esc(_histDesc(l))}</span><span style="color:var(--c-text3);white-space:nowrap;font-size:0.68rem">${d?esc(fmtDate(d)):''}${by?' · '+esc(by):''}</span></div>`;}
 function srHistoryHTML(s,admin){
   const log=(s.changeLog||s.history||s.changeHistory||s.auditLog||s.activity||[]).slice().reverse();
-  return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${log.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${log.length} ${log.length===1?'entry':'entries'}</span>`:''}</div>${log.length?`<div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${log.map(histRowHTML).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No changes recorded yet.${admin?' Edits to phase dates, owners, or reasons are logged here automatically — with who made the change and when.':' Changes made by admins will appear here.'}</div>`}</div>`;
+  /* Reconstruct a real, dated timeline from phase completion dates for legacy/imported records with no logged trail */
+  const recon=PHASES.map((p,i)=>{const ad=s.data?.[p.id]?.actualDate;return ad?{phase:p.name,idx:i,date:ad}:null;}).filter(Boolean).sort((a,b)=>pd(b.date)-pd(a.date));
+  const reconHTML=recon.length
+    ? `<div style="font-size:0.72rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px"><i class="fas fa-circle-info" style="opacity:0.6;margin-right:5px"></i>Reconstructed from recorded phase dates — detailed edit history builds from here on.</div><div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${recon.map(r=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 12px;border-bottom:1px solid var(--c-border);font-size:0.78rem"><span><i class="fas fa-circle-check" style="color:var(--c-green);margin-right:7px;font-size:0.72rem"></i><b>${esc(r.phase)}</b> completed</span><span style="color:var(--c-text3);white-space:nowrap">${fmtDate(r.date)}</span></div>`).join('')}</div>`
+    : `<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No changes recorded yet.${admin?' Edits to phase dates, owners, or reasons are logged here automatically — with who made the change and when.':' Changes made by admins will appear here.'}</div>`;
+  const cnt=log.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${log.length} ${log.length===1?'entry':'entries'}</span>`:(recon.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${recon.length} milestone${recon.length===1?'':'s'} (reconstructed)</span>`:'');
+  return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${cnt}</div>${log.length?`<div style="max-height:240px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${log.map(histRowHTML).join('')}</div>`:reconHTML}</div>`;
 }
 function refreshSRSummary(id){const s=S.showrooms.find(x=>x.id===id);const el=document.getElementById('srDetailSummary');if(s&&el)el.innerHTML=buildSRSummary(s);const h=document.getElementById('srHistory');if(s&&h)h.innerHTML=srHistoryHTML(s,isAdmin());}
 function savePhasesFor(id){
@@ -1997,7 +2110,7 @@ function openDLDetail(id){
     ${controls}
     <div style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Documents</div><span style="font-size:0.78rem;font-weight:700;color:${dp>=80?'var(--c-green)':dp>=40?'var(--c-amber)':'var(--c-red)'}" id="dlDocPct">${dp}%</span></div>
     <div class="doc-grid">${docs}</div></div>
-    ${(()=>{const dlog=(d.stageHistory||d.history||d.changeLog||d.changeHistory||d.activity||[]).slice().reverse();return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(histRowHTML).join('')}</div>`:`<div style="font-size:0.74rem;color:var(--c-text3);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:16px;text-align:center"><i class="fas fa-clock-rotate-left" style="opacity:0.4;display:block;font-size:1.3rem;margin-bottom:7px"></i>No history yet. Stage moves and document updates are logged here with who made them and when.</div>`}</div>`;})()}`;
+    ${(()=>{const dlog=(d.stageHistory||d.history||d.changeLog||d.changeHistory||d.activity||[]).slice().reverse();const dn=DOC_KEYS.filter(k=>d.documents?.[k]).length;const baseline=`<div style="font-size:0.78rem;color:var(--c-text2);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:14px 16px"><div style="color:var(--c-text3);margin-bottom:9px"><i class="fas fa-circle-info" style="opacity:0.6;margin-right:5px"></i>No detailed history was recorded before now — it builds from here on. Current state:</div><div style="display:flex;flex-direction:column;gap:5px">${d.startDate?`<div>• Onboarding started: <b>${fmtDate(d.startDate)}</b></div>`:''}<div>• Stage reached: <b>${esc(d.currentStage||'Interested')}</b></div><div>• Documents: <b>${docPct(d.documents)}%</b> (${dn}/${DOC_KEYS.length} complete)</div>${d.updatedAt?`<div>• Last updated: <b>${fmtDate(d.updatedAt)}</b></div>`:''}</div></div>`;return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(histRowHTML).join('')}</div>`:baseline}</div>`;})()}`;
   if(admin){
     document.getElementById('dlNextBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx+1]));
     document.getElementById('dlPrevBtn')?.addEventListener('click',()=>doMoveStage(id,funnel[curIdx-1]));
@@ -2555,6 +2668,9 @@ function renderSettings(){
 /* ── WHAT'S NEW / IMPROVEMENTS VIEW ── */
 const IMPROVEMENTS=[
   {group:'v8.0 — utility & sustainability wave',ico:'fa-rocket',col:'#10B981',items:[
+    {t:'Smart nudge composer (one-tap chase)',badge:'done',d:'Every action — and the showroom/partner detail views — now has a Nudge button that opens a ready-to-send message, pre-filled with the site, the exact blocker, who owns it and days overdue. Pick a tone (Gentle → Firm → Escalate, which loops in the RM) and send via WhatsApp or copy. Turns 10-minute message-writing into one tap.'},
+    {t:'Leading indicators (catch slips early)',badge:'done',d:'The feed now flags problems before they become delays: showrooms that have gone quiet (no phase done in 14 days), partners slowing in a stage before they hit critical, and upcoming milestones due within 5 days. Prevention, not just reaction.'},
+    {t:'Snooze actions',badge:'done',d:'Snooze any action for 7 days to keep the feed focused on what matters now; a count shows how many are hidden, with one click to bring them all back.'},
     {t:'Partner stage filter + position retained on edit',badge:'done',d:'Partner Onboarding now has a stage filter alongside the RM filter — pick a stage to focus the board on just those partners. And editing any showroom or partner card no longer throws you back to the top/left: your scroll position, open stage column, and filters all stay put.'},
     {t:'Managed RM list with zones',badge:'done',d:'A Field Reps (RM) manager in Settings — add/remove RMs, give each a zone. Every RM field on every form is now a dropdown fed by this list (no more spelling drift), and picking an RM auto-fills the zone. Includes a one-click "import names from records" and a clean-up tool that remaps misspelt RM variants onto the right name across all records.'},
     {t:'Map filter tabs',badge:'done',d:'The map now has tabs — All, Showrooms, and the partner stages Shortlisted / CFT Selected / Documentation / Onboarded — to plot just the set you care about. Records still plot by city when they have no exact coordinates (hollow pins).'},
@@ -2854,7 +2970,7 @@ function showApp(){
 }
 
 /* ── WINDOW EXPOSURE (for inline handlers) ── */
-Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem,bulkReassignRM,bulkReassignZone,setDocLink,generateWeeklyReport});
+Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem,bulkReassignRM,bulkReassignZone,setDocLink,generateWeeklyReport,openNudge,nudgeFromSR,nudgeFromDL});
 
 /* ── INIT / EVENT WIRING ── */
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2885,6 +3001,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('addPropBtn')?.addEventListener('click',doAddProp);
   document.getElementById('srEditBtn')?.addEventListener('click',()=>currentSrId&&openSREdit(currentSrId));
   document.getElementById('srDelBtn')?.addEventListener('click',()=>currentSrId&&deleteSR(currentSrId));
+  document.getElementById('srNudgeBtn')?.addEventListener('click',()=>currentSrId&&nudgeFromSR(currentSrId));
+  document.getElementById('dlNudgeBtn')?.addEventListener('click',()=>currentDlId&&nudgeFromDL(currentDlId));
   document.getElementById('dlEditBtn')?.addEventListener('click',()=>currentDlId&&openDLEdit(currentDlId));
   document.getElementById('dlDelBtn')?.addEventListener('click',()=>currentDlId&&deleteDL(currentDlId));
   document.getElementById('plDelBtn')?.addEventListener('click',async()=>{if(!currentPlId||!isAdmin())return;const p=S.pipeline.find(x=>x.id===currentPlId);if(p&&await showConfirm(`Delete lead "${p.name}"?`,'Delete Lead')){try{await deleteDoc(doc(db,'pipeline',currentPlId));closeModal('plDetailModal');toast('Lead deleted','success');}catch(e){toast('Delete failed','error');}}});
@@ -2894,6 +3012,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('confirmOkBtn')?.addEventListener('click',()=>resolveConfirm(true));
   document.getElementById('confirmCancelBtn')?.addEventListener('click',()=>resolveConfirm(false));
   document.getElementById('confirmCloseBtn')?.addEventListener('click',()=>resolveConfirm(false));
+  document.querySelectorAll('.nudge-tone').forEach(b=>b.addEventListener('click',()=>{_nudge.tone=b.dataset.tone;updateNudgeTones();renderNudge();}));
+  document.getElementById('nudgeCopyBtn')?.addEventListener('click',()=>{const t=document.getElementById('nudgeText');if(!t)return;const ok=()=>toast('Message copied','success');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(t.value).then(ok).catch(()=>{t.select();document.execCommand('copy');ok();});}else{t.select();document.execCommand('copy');ok();}});
+  document.getElementById('nudgeWaBtn')?.addEventListener('click',()=>{const t=document.getElementById('nudgeText'),o=_nudge.opts||{};if(!o.mobile){toast('No mobile on file — copy the message instead','warning');return;}window.open(waLink(o.mobile,t?t.value:''),'_blank');});
   document.getElementById('soundBtn')?.addEventListener('click',()=>{sound=!sound;localStorage.setItem('ais_sound',sound?'on':'off');updateSoundIcon();if(sound)beep('info');toast(sound?'Sound on':'Sound off','info');});
   document.getElementById('logoutBtn')?.addEventListener('click',doLogout);
   document.getElementById('loginBtn')?.addEventListener('click',doLogin);
