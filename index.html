@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
   --c-bg:#0A0F1E;--c-bg1:#0F1629;--c-bg2:#141D35;--c-bg3:#1A2540;--c-bg4:#1F2D4A;
@@ -420,7 +420,7 @@ canvas{max-height:220px;}
 .toggle.on{background:var(--c-blue);}
 .toggle.on::after{left:21px;}
 .imp-hero{background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.08));border:1px solid var(--c-border2);border-radius:var(--r-2xl);padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden;}
-.imp-hero::after{content:'v8.0';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
+.imp-hero::after{content:'v9.0';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
 .imp-hero h2{font-size:1.35rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;}
 .imp-hero p{font-size:0.82rem;color:var(--c-text2);max-width:640px;line-height:1.6;}
 .imp-stats{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;}
@@ -548,7 +548,7 @@ canvas{max-height:220px;}
   <div class="sidebar-top">
     <div class="brand">
       <div class="brand-icon"><img src="https://www.aiswindows.com/assets/images/ais-windows-logo.svg" alt="AIS"></div>
-      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v8.0</div></div>
+      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v9.0</div></div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -562,6 +562,10 @@ canvas{max-height:220px;}
     </button>
     <button class="nav-btn" data-view="zones" aria-label="Zones and RM Scorecards">
       <i class="fas fa-sitemap"></i><span>Zones &amp; RMs</span>
+    </button>
+    <button class="nav-btn" data-view="exceptions" aria-label="Exceptions — overdue and blocked">
+      <i class="fas fa-triangle-exclamation"></i><span>Exceptions</span>
+      <span class="nav-badge" id="nb-exc" style="display:none"></span>
     </button>
     <div class="nav-group">Execution</div>
     <button class="nav-btn" data-view="showrooms" aria-label="Showrooms">
@@ -753,7 +757,11 @@ canvas{max-height:220px;}
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Zone</label><select id="dl-zone" class="form-select"></select></div>
-        <div class="form-group"></div>
+        <div class="form-group"><label class="form-label">Follow-up by <span style="font-size:0.62rem;color:var(--c-text3)">(reminder)</span></label><input type="date" id="dl-followup" class="form-input"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Blocker <span style="font-size:0.62rem;color:var(--c-text3)">(if stuck)</span></label><select id="dl-blocker" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label">Blocker Owner</label><select id="dl-owner" class="form-select"></select></div>
       </div>
     <div class="form-row">
         <div class="form-group"><label class="form-label">Latitude <span style="font-size:0.62rem;color:var(--c-text3)">(optional — for map)</span></label><input type="number" id="dl-lat" class="form-input" step="any" placeholder="e.g. 28.6139"></div>
@@ -824,7 +832,8 @@ canvas{max-height:220px;}
   <div class="modal-box" style="max-width:440px">
     <div class="modal-head"><span class="modal-title" id="rejectTitle">Rejection Reason</span><button class="modal-close" data-close="rejectModal">×</button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">Reason *</label><textarea id="rejectReason" class="form-textarea" rows="4" placeholder="Provide the rejection reason…"></textarea></div>
+      <div class="form-group"><label class="form-label">Reason category *</label><select id="reject-reason" class="form-select"></select></div>
+      <div class="form-group"><label class="form-label">Details</label><textarea id="rejectReason" class="form-textarea" rows="3" placeholder="Add specifics (optional)…"></textarea></div>
     </div>
     <div class="modal-foot"><button class="btn btn-outline" data-close="rejectModal">Cancel</button><button class="btn btn-danger" id="rejectConfirmBtn"><i class="fas fa-ban"></i> Confirm Rejection</button></div>
   </div>
@@ -874,7 +883,7 @@ canvas{max-height:220px;}
 <div id="pdfTarget" style="position:absolute;left:-9999px;top:0;width:1100px;background:#fff;padding:32px;font-family:sans-serif"></div>
 </div><!-- /app -->
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script type="module">
@@ -943,6 +952,13 @@ const DELAY_REASONS=[
   {code:'other',label:'Other'}
 ];
 const REASON_LABEL=Object.fromEntries(DELAY_REASONS.map(r=>[r.code,r.label]));
+/* partner-side blockers + accountable owner (mirrors phase owner/reason for showrooms) */
+const DL_BLOCKERS=[{code:'',label:'— No blocker —'},{code:'docs_pending',label:'Docs pending (dealer)'},{code:'gst',label:'GST / Tax issue'},{code:'legal',label:'Legal / Agreement review'},{code:'finance',label:'Payment / Deposit'},{code:'space',label:'Space not finalized'},{code:'approval',label:'Internal approval'},{code:'unresponsive',label:'Partner unresponsive'},{code:'other',label:'Other'}];
+const DL_BLOCKER_LABEL=Object.fromEntries(DL_BLOCKERS.map(b=>[b.code,b.label]));
+const DL_OWNERS=['AIS','Dealer','Legal','Finance'];
+/* structured rejection reason codes — makes partner drop-off chartable (free-text detail still captured) */
+const REJECT_REASONS=[{code:'',label:'— Reason —'},{code:'financial',label:'Financial capacity'},{code:'location',label:'Location / space unsuitable'},{code:'docs',label:'Documentation failed'},{code:'background',label:'Background / reputation'},{code:'competitor',label:'Chose competitor'},{code:'unresponsive',label:'Went unresponsive'},{code:'pricing',label:'Pricing / terms'},{code:'other',label:'Other'}];
+const REJECT_REASON_LABEL=Object.fromEntries(REJECT_REASONS.map(r=>[r.code,r.label]));
 const STAGE_CATS=[
   {id:'initiation',name:'Initiation',phases:['dim'],color:'#3B82F6',icon:'fa-play-circle'},
   {id:'design',name:'Design',phases:['cad','plan'],color:'#8B5CF6',icon:'fa-pen-ruler'},
@@ -986,7 +1002,7 @@ async function saveConfig(){
 
 /* ── STATE ── */
 const S={showrooms:[],dealers:[],pipeline:[],properties:[]};
-let charts={funnel:null,trend:null,docs:null,phaseC:null,stageC:null,dlByPhase:null,dlPie:null,rmPort:null,rmComp:null,cycle:null,reasons:null,delayByPhase:null,delayPie:null};
+let charts={funnel:null,trend:null,docs:null,phaseC:null,stageC:null,dlByPhase:null,dlPie:null,rmPort:null,rmComp:null,cycle:null,reasons:null,delayByPhase:null,delayPie:null,risk:null,dropoff:null};
 let view='today',unsubs=[],isLoading=false,firstLoad=false;
 let uid=null,email=null,role=null,isGuest=false;
 let sortSR=true,groupSR=false,sortSR2=true,groupSR2=false;
@@ -999,6 +1015,7 @@ let sound=localStorage.getItem('ais_sound')!=='off';
 let undoStack=[],cmdIdx=-1;
 let leafletMap=null,mapInitialized=false,mapFilter='all';
 let geminiKey=localStorage.getItem('ais_gemini_key')||'';
+let todayRmFilter=localStorage.getItem('ais_today_rm')||'all';
 /* IMPROVEMENT: per-render memo caches (perf + correctness on optimistic edits) */
 let _statsCache=new WeakMap();
 let _histOverrunCache=null;
@@ -1040,6 +1057,8 @@ function pd(d){
   const x=new Date(d);return isNaN(x)?null:x;
 }
 function today0(){const x=new Date();x.setHours(0,0,0,0);return x;}
+/* LOCAL YYYY-MM-DD (avoids the UTC drift that toISOString().slice(0,10) causes in IST) */
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function dayDiff(a,b){const pa=pd(a),pb=pd(b);if(!pa||!pb)return 0;return Math.round((pb-pa)/86400000);}
 function fmtDate(d){const p=pd(d);return p?p.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';}
 function fmtDateShort(d){const p=pd(d);return p?p.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'—';}
@@ -1055,6 +1074,17 @@ function activeSR(){return S.showrooms.filter(s=>!isSRDone(s));}
 function activeDL(){return S.dealers.filter(d=>!isDLDone(d)&&!isDLRej(d));}
 function docPct(d){return Math.round((DOC_KEYS.filter(k=>d?.[k]).length/DOC_KEYS.length)*100);}
 function missingDocs(d){return DOC_KEYS.filter(k=>!d?.documents?.[k]).map(k=>DOC_LABELS[k]);}
+/* document aging — baseline a pending doc from its requested date (or partner start), stamp a received date when ticked */
+function docBaseline(d,k){return d.docMeta?.[k]?.req||d.startDate||(d.createdAt&&pd(d.createdAt)?pd(d.createdAt).toISOString().slice(0,10):'')||'';}
+function docAgeBadge(d,k){
+  const done=!!d.documents?.[k];
+  if(done){const rec=d.docMeta?.[k]?.rec;return`<span style="font-size:0.58rem;color:var(--c-green);white-space:nowrap" title="received">✓ ${rec?fmtDateShort(rec):'done'}</span>`;}
+  const base=docBaseline(d,k);if(!base)return'';
+  const age=Math.max(0,dayDiff(base,today0()));
+  const col=age>=14?'var(--c-red)':age>=7?'var(--c-amber)':'var(--c-text3)';
+  return`<span style="font-size:0.58rem;color:${col};white-space:nowrap" title="pending since ${fmtDate(base)}">${age}d</span>`;
+}
+function oldestPendingDoc(d){let best=null;DOC_KEYS.forEach(k=>{if(d.documents?.[k])return;const base=docBaseline(d,k);if(!base)return;const age=Math.max(0,dayDiff(base,today0()));if(!best||age>best.age)best={key:k,label:DOC_LABELS[k],age};});return best;}
 function waLink(mobile,msg){return`https://wa.me/${(mobile||'').replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg||'')}`;}
 /* ── SNOOZE (keep the action feed focused) ── */
 function getSnoozes(){try{return JSON.parse(localStorage.getItem('ais_snoozes')||'{}');}catch(e){return{};}}
@@ -1065,6 +1095,26 @@ function snoozeAction(a,days){const s=getSnoozes();const d=new Date();d.setDate(
 function clearSnoozes(){setSnoozes({});toast('Snoozes cleared','info');renderView();}
 function startP(){const b=document.getElementById('nbar');if(b){b.style.display='block';}}
 function stopP(){const b=document.getElementById('nbar');if(b){b.style.display='none';}}
+/* ── WRITE QUEUE (no silent data loss on flaky networks) ──
+   Optimistic edits used to stay on screen even if Firestore rejected the write, until a snapshot
+   quietly reverted them. Failed writes are now queued and retried with backoff; a pending count
+   shows in the sync pill so the user knows a save is still in flight. */
+let pendingWrites=[],_flushTimer=null;
+function qWrite(label,opFactory,onOk){
+  return Promise.resolve().then(opFactory).then(r=>{if(onOk)onOk(r);if(pendingWrites.length===0)updateSyncUI('live');return r;})
+  .catch(err=>{pendingWrites.push({label,opFactory,onOk,attempts:1});updateSyncUI('pending');toast(`${label} didn't save — queued, retrying…`,'warning');scheduleFlush();});
+}
+function scheduleFlush(ms){if(_flushTimer)return;_flushTimer=setTimeout(()=>{_flushTimer=null;flushPending();},ms||8000);}
+async function flushPending(){
+  if(!pendingWrites.length)return;
+  const q=pendingWrites.slice();pendingWrites=[];updateSyncUI('syncing');
+  for(const w of q){
+    try{const r=await w.opFactory();if(w.onOk)w.onOk(r);}
+    catch(e){w.attempts++;if(w.attempts<=8)pendingWrites.push(w);else toast(`${w.label} failed after ${w.attempts-1} retries — change not saved`,'error');}
+  }
+  if(pendingWrites.length){updateSyncUI('pending');scheduleFlush(15000);}else updateSyncUI('live');
+}
+window.addEventListener('online',()=>{toast('Back online — retrying saves','info');flushPending();});
 
 /* ── SOUND ── */
 let actx=null;
@@ -1110,16 +1160,22 @@ function resolveConfirm(v){if(confirmResolve){confirmResolve(v);confirmResolve=n
 
 /* ── MODAL ── */
 function openModal(id){const el=document.getElementById(id);if(el){el.classList.add('on');setTimeout(()=>{el.querySelector('input,button,textarea')?.focus();},50);}}
-function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove('on');if(id==='rejectModal'){pendingRejectId=null;pendingRejectStage=null;}}
+function closeModal(id){
+  if(id==='srDetailModal'&&srDirty&&currentSrId){savePhasesFor(currentSrId);} /* flush pending phase edits before closing — no lost work */
+  const el=document.getElementById(id);if(el)el.classList.remove('on');if(id==='rejectModal'){pendingRejectId=null;pendingRejectStage=null;}
+}
 function resetForm(id){const el=document.getElementById(id);if(!el)return;el.querySelectorAll('input,textarea,select').forEach(i=>{if(i.type==='checkbox'||i.type==='radio')i.checked=false;else if(i.tagName==='SELECT')i.selectedIndex=0;else i.value='';i.classList.remove('input-error');});}
 
-/* ── NOTIFICATIONS ── */
+/* ── NOTIFICATIONS (persisted across refresh) ── */
 let notifs=[],recentKeys=new Set();
+function persistNotifs(){try{localStorage.setItem('ais_notifs',JSON.stringify(notifs.slice(0,80)));}catch(e){}}
+function loadNotifs(){try{const a=JSON.parse(localStorage.getItem('ais_notifs')||'[]');if(Array.isArray(a))notifs=a;}catch(e){}}
 function addNotif(title,desc,type,eid=null,etype=null){
   const key=`${etype||'g'}:${eid||'n'}:${type}`;
   if(recentKeys.has(key))return;recentKeys.add(key);setTimeout(()=>recentKeys.delete(key),5000);
   notifs.unshift({id:Date.now()+Math.random(),title,desc,type,eid,etype,read:false,at:new Date().toISOString()});
   if(notifs.length>80)notifs=notifs.slice(0,80);
+  persistNotifs();
   renderNotifs();const u=notifs.filter(n=>!n.read).length;
   const dot=document.getElementById('notifDot');if(dot)dot.classList.toggle('on',u>0);
   if(type==='critical')beep('critical');else if(type==='warning')beep('warning');
@@ -1129,7 +1185,7 @@ function renderNotifs(){
   if(!notifs.length){l.innerHTML='<div class="notif-empty">No notifications</div>';return;}
   const icons={critical:'fa-circle-exclamation',warning:'fa-triangle-exclamation',ok:'fa-circle-check',info:'fa-circle-info'};
   l.innerHTML=notifs.slice(0,40).map(n=>`<div class="notif-item${n.read?'':' unread'}" data-nid="${n.id}"><div class="ni-icon ${n.type==='critical'?'crit':n.type==='warning'?'warn':'ok'}"><i class="fas ${icons[n.type]||icons.info}"></i></div><div class="ni-body"><div class="ni-title">${esc(n.title)}</div><div class="ni-desc">${esc(n.desc)}</div><div class="ni-time">${fmtTime(n.at)}</div></div></div>`).join('');
-  l.querySelectorAll('.notif-item').forEach(it=>it.addEventListener('click',()=>{const nid=parseFloat(it.dataset.nid);const n=notifs.find(x=>x.id===nid);if(n){n.read=true;renderNotifs();if(n.etype==='showroom'&&n.eid)openSRDetail(n.eid);else if(n.etype==='dealer'&&n.eid)openDLDetail(n.eid);}}));
+  l.querySelectorAll('.notif-item').forEach(it=>it.addEventListener('click',()=>{const nid=parseFloat(it.dataset.nid);const n=notifs.find(x=>x.id===nid);if(n){n.read=true;persistNotifs();renderNotifs();if(n.etype==='showroom'&&n.eid)openSRDetail(n.eid);else if(n.etype==='dealer'&&n.eid)openDLDetail(n.eid);}}));
 }
 
 /* ── DATA NORMALIZATION ── insulate the UI from dirty/legacy/partial documents.
@@ -1137,7 +1193,7 @@ function renderNotifs(){
 function asObj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
 function asArr(v){return Array.isArray(v)?v:[];}
 function normSR(d){return{...d,name:d.name||'(unnamed showroom)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',startDate:d.startDate||'',committedDate:d.committedDate||'',templateId:d.templateId||'',data:asObj(d.data),changeLog:asArr(d.changeLog).length?asArr(d.changeLog):asArr(d.history)};}
-function normDL(d){return{...d,name:d.name||'(unnamed partner)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',currentStage:d.currentStage||'Interested',documents:asObj(d.documents),docLinks:asObj(d.docLinks),stageHistory:asArr(d.stageHistory).length?asArr(d.stageHistory):asArr(d.history)};}
+function normDL(d){return{...d,name:d.name||'(unnamed partner)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',currentStage:d.currentStage||'Interested',documents:asObj(d.documents),docLinks:asObj(d.docLinks),docMeta:asObj(d.docMeta),blockerCode:d.blockerCode||'',blockerOwner:d.blockerOwner||'',followupDate:d.followupDate||'',stageHistory:asArr(d.stageHistory).length?asArr(d.stageHistory):asArr(d.history)};}
 function normPL(d){return{...d,name:d.name||'(unnamed lead)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',stage:d.stage||'Lead Generated',followupDate:d.followupDate||'',changeLog:asArr(d.changeLog)};}
 function normProp(d){return{...d,name:d.name||'(unnamed property)',city:d.city||'',rm:d.rm||'',status:d.status||'Shortlisted',changeLog:asArr(d.changeLog)};}
 const NORM={showrooms:normSR,dealers:normDL,pipeline:normPL,properties:normProp};
@@ -1256,6 +1312,8 @@ function phaseCycles(s){
     return{phase:p.name,id:p.id,plan:planDurS(s,i),actual,variance:actual-planDurS(s,i)};
   });
 }
+/* later phase completed before an earlier one — usually a data-entry slip; returns the offending phase names */
+function phaseOutOfOrder(s){const out=[];for(let i=1;i<PHASES.length;i++){if(s.data?.[PHASES[i].id]?.actualDate){for(let j=0;j<i;j++){if(!s.data?.[PHASES[j].id]?.actualDate){out.push(PHASES[i].name);break;}}}}return out;}
 /* ── NUDGE COMPOSER (context-rich, tone-escalating chase messages) ── */
 let _nudge={tone:'gentle',opts:null};
 function openNudge(opts){
@@ -1337,22 +1395,30 @@ function buildActions(){
       actions.push({priority:'info',type:'sr-soon',title:`${s.name} — Milestone in ${dd===0?'today':dd+'d'}`,desc:`"${PHASES[ni].name}" is due ${dd===0?'today':'in '+dd+' day(s)'}. A quick check-in now keeps it on track.`,entity:s,rm:s.rm||'Unassigned',tags:[{t:s.rm||'—',c:'rm'},{t:PHASES[ni].name,c:'phase'},{t:'due '+(dd===0?'today':dd+'d'),c:'age'}],actions:[{label:'Open Tracker',fn:()=>openSRDetail(s.id)},{label:'Nudge',fn:()=>openNudge({kind:'sr',id:s.id,name:s.name,mobile:s.mobileNumber,contact:s.dealerName||'',context:{phase:PHASES[ni].name,days:0,city:s.city,rm:s.rm}}),cls:'wa-btn'}]});
     }
   });
-  /* Critical dealers */
+  /* Critical dealers — now surfaces the blocker + oldest pending doc */
   activeDL().forEach(d=>{
     const tl=dlTimeline(d);if(tl.level==='critical'){
-      actions.push({priority:'critical',type:'dl-critical',title:`${d.name} — Partner Stuck`,desc:`In "${d.currentStage}" for ${tl.elapsed}d (target ${tl.tgt}d). ${100-docPct(d.documents)}% docs pending.`,why:`Stage delay ${tl.delay}d > 10d threshold`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d late',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
+      const od=oldestPendingDoc(d);const blk=d.blockerCode?` Blocker: ${DL_BLOCKER_LABEL[d.blockerCode]}${d.blockerOwner?' ('+d.blockerOwner+')':''}.`:'';
+      actions.push({priority:'critical',type:'dl-critical',title:`${d.name} — Partner Stuck`,desc:`In "${d.currentStage}" for ${tl.elapsed}d (target ${tl.tgt}d).${blk} ${od?`Oldest doc: ${od.label} ${od.age}d.`:`${100-docPct(d.documents)}% docs pending.`}`,why:`Stage delay ${tl.delay}d > 10d threshold`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d late',c:'phase'},{t:d.blockerCode?DL_BLOCKER_LABEL[d.blockerCode]:d.city,c:d.blockerCode?'phase':'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
     }
   });
   /* LEADING INDICATOR — partners slowing in a stage (warning, before they go critical) */
   activeDL().forEach(d=>{
     const tl=dlTimeline(d);if(tl.level==='warning'&&docPct(d.documents)<80){
-      actions.push({priority:'warning',type:'dl-warn',title:`${d.name} — Slowing in ${d.currentStage}`,desc:`${tl.elapsed}d in "${d.currentStage}" (target ${tl.tgt}d), ${100-docPct(d.documents)}% docs pending. Nudge before it stalls.`,why:`Stage delay ${tl.delay}d`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d over',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
+      actions.push({priority:'warning',type:'dl-warn',title:`${d.name} — Slowing in ${d.currentStage}`,desc:`${tl.elapsed}d in "${d.currentStage}" (target ${tl.tgt}d), ${100-docPct(d.documents)}% docs pending.${d.blockerCode?' Blocker: '+DL_BLOCKER_LABEL[d.blockerCode]+'.':''} Nudge before it stalls.`,why:`Stage delay ${tl.delay}d`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:tl.delay+'d over',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:tl.delay,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
     }
   });
   /* Near-completion dealers */
   activeDL().forEach(d=>{
     const dp=docPct(d.documents);if(dp>=80&&dp<100&&!isDLRej(d)){
       actions.push({priority:'info',type:'dl-docs',title:`${d.name} — Almost Complete`,desc:`${dp}% docs done. One final push for onboarding.`,why:`Docs ≥80% — near completion`,entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:dp+'% docs',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Checklist',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl-final',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:dp,missing:missingDocs(d),stage:d.currentStage,city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
+    }
+  });
+  /* Partner follow-ups due (explicit reminder dates) */
+  activeDL().forEach(d=>{
+    if(!d.followupDate)return;const due=dayDiff(today0(),d.followupDate);
+    if(due<=0){
+      actions.push({priority:'warning',type:'dl-followup',title:`Follow-up due: ${d.name}`,desc:`Partner follow-up set for ${fmtDateShort(d.followupDate)}${due<0?` (${-due}d overdue)`:' (today)'}.${d.blockerCode?' Blocker: '+DL_BLOCKER_LABEL[d.blockerCode]+'.':''}`,why:'Reminder date reached',entity:d,rm:d.rm||'Unassigned',tags:[{t:d.rm||'—',c:'rm'},{t:due<0?(-due)+'d overdue':'today',c:'phase'},{t:d.city,c:'age'}],actions:[{label:'View Partner',fn:()=>openDLDetail(d.id)},{label:'Nudge',fn:()=>openNudge({kind:'dl',id:d.id,name:d.name,mobile:d.mobileNumber,context:{docPct:docPct(d.documents),missing:missingDocs(d),stage:d.currentStage,days:Math.max(0,-due),city:d.city,rm:d.rm}}),cls:'wa-btn'}]});
     }
   });
   /* Follow-ups due (explicit reminder dates) */
@@ -1381,7 +1447,7 @@ function setView(v){
   view=v;_navScrollReset=true; /* navigation starts at the top */
   document.querySelectorAll('.nav-btn,[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===v);b.setAttribute('aria-current',b.dataset.view===v?'page':'false');});
   if(v==='map'){if(leafletMap){try{leafletMap.remove();}catch(e){}}leafletMap=null;}
-  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',zones:'Zones & RM Scorecards',settings:'Settings',improvements:"What's New — v8.0"};
+  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',zones:'Zones & RM Scorecards',exceptions:'Exceptions',settings:'Settings',improvements:"What's New — v9.0"};
   const el=document.getElementById('pageTitle');if(el)el.textContent=titles[v]||v;
   document.title=`${titles[v]||v} | AIS Expansion OS`;
   const addBtn=document.getElementById('addBtn');
@@ -1407,6 +1473,7 @@ function renderView(){
     else if(v==='properties')renderProperties();
     else if(v==='insights')renderInsights();
     else if(v==='zones')renderZones();
+    else if(v==='exceptions')renderExceptions();
     else if(v==='settings')renderSettings();
     else if(v==='improvements')renderImprovements();
   }catch(e){
@@ -1427,19 +1494,25 @@ function renderView(){
 function renderToday(){
   const c=document.getElementById('content');if(!c)return;
   const actions=buildActions();
-  const acts=actions.filter(a=>!isSnoozed(a));acts.forEach((a,i)=>a._gi=i);
-  const snoozedCount=actions.length-acts.length;
+  let acts=actions.filter(a=>!isSnoozed(a));
+  if(todayRmFilter&&todayRmFilter!=='all')acts=acts.filter(a=>(a.rm||'Unassigned')===todayRmFilter);
+  acts.forEach((a,i)=>a._gi=i);
+  const snoozedCount=actions.filter(a=>isSnoozed(a)).length;
   const critSR=activeSR().filter(s=>srLevel(s)==='critical').length;
   const critDL=activeDL().filter(d=>dlTimeline(d).level==='critical').length;
   const warnSR=activeSR().filter(s=>srLevel(s)==='warning').length;
   const doneSR=S.showrooms.filter(s=>isSRDone(s)).length;
   const today=new Date();const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const focusRMs=[...new Set([...S.showrooms,...S.dealers,...S.pipeline].map(r=>r.rm).filter(Boolean))].sort();
   c.innerHTML=`
   <div class="today-header">
     <div class="today-date">${days[today.getDay()]}, ${today.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div>
     <div class="today-title">${critSR+critDL>0?`⚠️ ${critSR+critDL} item${critSR+critDL>1?'s':''} need attention`:'✅ Operations running smoothly'}</div>
-    <div class="today-sub">${acts.length} action${acts.length!==1?'s':''} in your feed${snoozedCount?` · ${snoozedCount} snoozed`:''}</div>
-    <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="generateWeeklyReport()"><i class="fas fa-file-lines"></i> Weekly Report</button>
+    <div class="today-sub">${acts.length} action${acts.length!==1?'s':''} in your feed${todayRmFilter&&todayRmFilter!=='all'?` · focused on ${esc(todayRmFilter)}`:''}${snoozedCount?` · ${snoozedCount} snoozed`:''}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-outline btn-sm" onclick="generateWeeklyReport()"><i class="fas fa-file-lines"></i> Weekly Report</button>
+      <div class="fpill" style="min-width:160px"><i class="fas fa-user-tie"></i><select id="todayRmFocus"><option value="all">All RMs (everyone)</option>${focusRMs.map(r=>`<option value="${esc(r)}" ${todayRmFilter===r?'selected':''}>My items · ${esc(r)}</option>`).join('')}</select></div>
+    </div>
   </div>
   <div class="today-kpis">
     <div class="tkpi" style="--tkpi-c:var(--c-red)" onclick="setView('showrooms')">
@@ -1471,8 +1544,9 @@ function renderToday(){
   <div id="aiBriefSection"></div>
   <div class="action-feed" id="actionFeed"></div>`;
   renderAIBrief();
+  document.getElementById('todayRmFocus')?.addEventListener('change',e=>{todayRmFilter=e.target.value;localStorage.setItem('ais_today_rm',todayRmFilter);renderView();});
   const feed=document.getElementById('actionFeed');if(!feed)return;
-  if(!acts.length){feed.innerHTML=`<div class="empty-feed"><i class="fas fa-check-double"></i><h3>All clear!</h3><p>${snoozedCount?`No active actions (${snoozedCount} snoozed).`:'No pending actions. Great work.'}</p>${snoozedCount?'<button class="btn btn-ghost btn-sm" id="clearSnoozeBtn" style="margin-top:10px"><i class="fas fa-bell"></i> Show snoozed</button>':''}</div>`;document.getElementById('clearSnoozeBtn')?.addEventListener('click',clearSnoozes);return;}
+  if(!acts.length){feed.innerHTML=`<div class="empty-feed"><i class="fas fa-check-double"></i><h3>All clear!</h3><p>${todayRmFilter&&todayRmFilter!=='all'?`No actions for ${esc(todayRmFilter)}.`:snoozedCount?`No active actions (${snoozedCount} snoozed).`:'No pending actions. Great work.'}</p>${snoozedCount?'<button class="btn btn-ghost btn-sm" id="clearSnoozeBtn" style="margin-top:10px"><i class="fas fa-bell"></i> Show snoozed</button>':''}</div>`;document.getElementById('clearSnoozeBtn')?.addEventListener('click',clearSnoozes);return;}
   const groups={critical:[],warning:[],info:[],ok:[]};
   acts.forEach(a=>groups[a.priority].push(a));
   const sec=(title,arr)=>arr.length?`<div class="af-section-title">${title} (${arr.length})</div>`+arr.map(a=>renderActionCard(a,a._gi)).join(''):'';
@@ -1860,6 +1934,7 @@ function openSRDetail(id){
   const logHtml=srHistoryHTML(s,admin);
   document.getElementById('srDetailBody').innerHTML=`
     <div id="srDetailSummary">${buildSRSummary(s)}</div>
+    ${(()=>{const o=phaseOutOfOrder(s);return o.length?`<div class="nba warn" style="margin-top:14px"><i class="fas fa-arrows-turn-to-dots"></i> Out-of-sequence: ${esc(o.join(', '))} marked done before an earlier phase. Verify the dates are correct.</div>`:'';})()}
     <div style="margin-top:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Phase Tracker ${admin?'<span style="color:var(--c-amber);text-transform:none;font-weight:500">· edits auto-save</span>':''}</div>
     </div>
@@ -1917,13 +1992,14 @@ function savePhasesFor(id){
   const s=S.showrooms.find(x=>x.id===id);if(!s||!isAdmin())return;
   const start=s.startDate?pd(s.startDate):null;
   const oldData=JSON.parse(JSON.stringify(s.data||{}));
-  const newData={};let invalid=false;const changes=[];
+  const newData={};let invalid=false,invalidFuture=false;const changes=[];
   PHASES.forEach(p=>{
     const row=document.querySelector(`#srDetailBody tr[data-pid="${p.id}"]`);if(!row){if(oldData[p.id])newData[p.id]=oldData[p.id];return;}
     const actInp=row.querySelector('.ph-actual');const ownerSel=row.querySelector('.ph-owner');const reasonSel=row.querySelector('.ph-reason');const noteInp=row.querySelector('.ph-note');
     const actVal=actInp?.value||'';const owner=ownerSel?.value||PHASE_OWNER_DEFAULT[p.id];const reasonCode=reasonSel?.value||'';const note=(noteInp?.value||'').trim();
     actInp?.classList.remove('input-error');
     if(actVal&&start&&pd(actVal)<start){actInp?.classList.add('input-error');invalid=true;}
+    if(actVal&&pd(actVal)>today0()){actInp?.classList.add('input-error');invalidFuture=true;}
     const rec={};if(actVal)rec.actualDate=actVal;if(owner)rec.owner=owner;if(reasonCode)rec.reasonCode=reasonCode;if(note)rec.note=note;
     if(Object.keys(rec).length)newData[p.id]=rec;
     /* changelog diff (capture from -> to) */
@@ -1933,13 +2009,15 @@ function savePhasesFor(id){
     if((o.reasonCode||'')!==reasonCode)changes.push({phase:p.name,field:'reason',from:o.reasonCode?REASON_LABEL[o.reasonCode]:'none',to:reasonCode?REASON_LABEL[reasonCode]:'cleared'});
   });
   if(invalid){toast('Actual date can’t be before the start date','error');return;}
+  if(invalidFuture){toast('Actual date can’t be in the future','error');return;}
   if(!changes.length){srDirty=false;document.getElementById('srDirty')?.classList.remove('on');return;}
+  /* non-blocking sequence warning — a later phase completed before an earlier one is usually a data-entry slip */
+  const ooo=[];for(let i=1;i<PHASES.length;i++){if(newData[PHASES[i].id]?.actualDate){for(let j=0;j<i;j++){if(!newData[PHASES[j].id]?.actualDate){ooo.push(PHASES[i].name);break;}}}}
   undoStack.push({id,old:oldData});if(undoStack.length>20)undoStack.shift();
   const cl=(s.changeLog||[]).concat(changes.map(ch=>({...ch,at:new Date().toISOString(),by:email||'admin',text:`${ch.phase}: ${ch.field} ${ch.from?ch.from+' → ':'→ '}${ch.to}`}))).slice(-100);
   s.data=newData;s.changeLog=cl; /* optimistic */
-  updateDoc(doc(db,'showrooms',id),{data:newData,changeLog:cl,updatedAt:serverTimestamp()})
-    .then(()=>{srDirty=false;document.getElementById('srDirty')?.classList.remove('on');toast('Saved','success',id);})
-    .catch(e=>toast('Save failed: '+e.message,'error'));
+  qWrite('Phase save',()=>updateDoc(doc(db,'showrooms',id),{data:newData,changeLog:cl,updatedAt:serverTimestamp()}),()=>{srDirty=false;document.getElementById('srDirty')?.classList.remove('on');toast('Saved','success',id);});
+  if(ooo.length)toast(`Heads up: ${ooo[0]} marked done before an earlier phase — check sequence`,'warning');
   refreshSRSummary(id);renderView();
 }
 function openSREdit(id){
@@ -2049,22 +2127,24 @@ function renderDLCards(body,list){
 function buildDLCard(d){
   const dp=docPct(d.documents);const tl=dlTimeline(d);const age=d.startDate?dayDiff(d.startDate,today0()):0;
   const delayTag=tl.level==='critical'?`<span class="kk-tag" style="background:var(--c-critical);color:var(--c-red);border-color:var(--c-critical-b)">${tl.delay}d late</span>`:tl.level==='warning'?`<span class="kk-tag" style="background:var(--c-warn);color:var(--c-amber)">${tl.delay}d</span>`:'';
+  const blkTag=d.blockerCode?`<span class="kk-tag" style="background:var(--c-critical);color:var(--c-red);border-color:var(--c-critical-b)"><i class="fas fa-hand" style="font-size:0.55rem"></i> ${esc(DL_BLOCKER_LABEL[d.blockerCode])}</span>`:'';
   return`<div class="kk" data-id="${d.id}">
     <div class="kk-name">${esc(d.name)}</div>
     <div class="kk-meta">${esc(d.city||'—')}${d.rm?' · '+esc(d.rm):''}</div>
     <div class="kk-footer"><span class="kk-tag">${dp}% docs</span><span class="kk-age">${age}d</span></div>
-    ${delayTag?`<div style="margin-top:6px">${delayTag}</div>`:''}
+    ${delayTag||blkTag?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${delayTag}${blkTag}</div>`:''}
   </div>`;
 }
 function buildDLFullCard(d){
   const dp=docPct(d.documents);const tl=dlTimeline(d);const rej=isDLRej(d);
   const chip=rej?'<span class="chip chip-crit">'+esc(d.currentStage)+'</span>':isDLDone(d)?'<span class="chip chip-ok">Onboarded</span>':tl.level==='critical'?'<span class="chip chip-crit">Delayed</span>':tl.level==='warning'?'<span class="chip chip-warn">At Risk</span>':'<span class="chip chip-info">'+esc(d.currentStage||'Interested')+'</span>';
   const pcls=dp>=80?'green':dp>=40?'amber':'red';
+  const blkLine=d.blockerCode&&!rej?`<div class="nba crit"><i class="fas fa-hand"></i> Blocker: ${esc(DL_BLOCKER_LABEL[d.blockerCode])}${d.blockerOwner?' · '+esc(d.blockerOwner):''}</div>`:'';
   return`<div class="ecard${rej?'':tl.level==='critical'?' crit':tl.level==='warning'?' warn':''}" data-id="${d.id}">
     <div class="ecard-top"><div class="ecard-head"><div><div class="ecard-name">${esc(d.name)}</div><div class="ecard-meta"><span><i class="fas fa-location-dot"></i>${esc(d.city||'—')}</span><span><i class="fas fa-user-tie"></i>${esc(d.rm||'—')}</span>${d.firmName?`<span><i class="fas fa-building"></i>${esc(d.firmName)}</span>`:''}</div></div>${chip}</div></div>
     <div class="ecard-body">
       <div class="prog-wrap"><div class="prog-label"><span>Documents</span><span>${dp}%</span></div><div class="prog-track"><div class="prog-fill ${pcls}" style="width:${dp}%"></div></div></div>
-      ${rej?`<div class="nba crit"><i class="fas fa-ban"></i> ${esc(d.rejectionReason||'Rejected')}</div>`:tl.level!=='ok'?`<div class="nba ${tl.level==='critical'?'crit':'warn'}"><i class="fas fa-clock"></i> ${tl.delay}d past stage target</div>`:`<div class="nba ok"><i class="fas fa-circle-check"></i> ${d.currentStage||'Interested'} · on track</div>`}
+      ${rej?`<div class="nba crit"><i class="fas fa-ban"></i> ${esc(d.rejectionReason||'Rejected')}</div>`:blkLine||(tl.level!=='ok'?`<div class="nba ${tl.level==='critical'?'crit':'warn'}"><i class="fas fa-clock"></i> ${tl.delay}d past stage target</div>`:`<div class="nba ok"><i class="fas fa-circle-check"></i> ${d.currentStage||'Interested'} · on track</div>`)}
     </div>
     <div class="ecard-foot"><button class="btn btn-outline btn-sm" style="flex:1" onclick="event.stopPropagation();openDLDetail('${d.id}')"><i class="fas fa-list-check"></i> Manage</button>${d.mobileNumber?`<a class="btn btn-sm wa-btn" href="${waLink(d.mobileNumber,'Hi '+d.name+', regarding your AIS partnership onboarding.')}" target="_blank" onclick="event.stopPropagation()"><i class="fab fa-whatsapp"></i></a>`:''}</div>
   </div>`;
@@ -2088,7 +2168,7 @@ function openDLDetail(id){
       ${i<funnel.length-1?`<div style="position:absolute;top:13px;left:60%;right:-40%;height:2px;background:${i<curIdx&&!isRejectStage(cur)?'var(--c-green)':'var(--c-border2)'}"></div>`:''}
     </div>`;
   }).join('');
-  const docs=DOC_KEYS.map(k=>{const lnk=d.docLinks?.[k];return`<div class="doc-item"><input type="checkbox" data-dockey="${k}" ${d.documents?.[k]?'checked':''} ${admin?'':'disabled'}><span style="flex:1">${esc(DOC_LABELS[k])}</span>${lnk?`<a href="${esc(lnk)}" target="_blank" title="Open document" onclick="event.stopPropagation()" style="color:var(--c-blue)"><i class="fas fa-up-right-from-square" style="font-size:0.66rem"></i></a>`:''}${admin?`<button class="doc-link-btn" data-dockey="${k}" title="${lnk?'Edit link':'Attach link'}" style="background:none;border:none;color:var(--c-text3);cursor:pointer;padding:1px 2px"><i class="fas fa-${lnk?'pen':'paperclip'}" style="font-size:0.64rem"></i></button>`:''}</div>`;}).join('');
+  const docs=DOC_KEYS.map(k=>{const lnk=d.docLinks?.[k];return`<div class="doc-item"><input type="checkbox" data-dockey="${k}" ${d.documents?.[k]?'checked':''} ${admin?'':'disabled'}><span style="flex:1">${esc(DOC_LABELS[k])}</span>${docAgeBadge(d,k)}${lnk?`<a href="${esc(lnk)}" target="_blank" title="Open document" onclick="event.stopPropagation()" style="color:var(--c-blue)"><i class="fas fa-up-right-from-square" style="font-size:0.66rem"></i></a>`:''}${admin?`<button class="doc-link-btn" data-dockey="${k}" title="${lnk?'Edit link':'Attach link'}" style="background:none;border:none;color:var(--c-text3);cursor:pointer;padding:1px 2px"><i class="fas fa-${lnk?'pen':'paperclip'}" style="font-size:0.64rem"></i></button>`:''}</div>`;}).join('');
   let controls='';
   if(admin&&!isRejectStage(cur)){
     controls=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -2105,10 +2185,20 @@ function openDLDetail(id){
       <span class="chip chip-neu"><i class="fas fa-user-tie"></i> ${esc(d.rm||'—')}</span>
       ${d.mobileNumber?`<a class="chip chip-ok" href="${waLink(d.mobileNumber,'Hi '+d.name)}" target="_blank"><i class="fab fa-whatsapp"></i> ${esc(d.mobileNumber)}</a>`:''}
       ${tl.level!=='ok'&&!isRejectStage(cur)?`<span class="chip ${tl.level==='critical'?'chip-crit':'chip-warn'}"><i class="fas fa-clock"></i> ${tl.delay}d late</span>`:''}
+      ${d.blockerCode?`<span class="chip chip-crit"><i class="fas fa-hand"></i> ${esc(DL_BLOCKER_LABEL[d.blockerCode]||d.blockerCode)}${d.blockerOwner?' · '+esc(d.blockerOwner):''}</span>`:''}
+      ${d.followupDate&&!isDLDone(d)?`<span class="chip ${dayDiff(today0(),d.followupDate)<=0?'chip-warn':'chip-info'}"><i class="fas fa-bell"></i> Follow-up ${fmtDateShort(d.followupDate)}${dayDiff(today0(),d.followupDate)<0?' (overdue)':''}</span>`:''}
     </div>
     ${isRejectStage(cur)?`<div class="nba crit"><i class="fas fa-ban"></i> ${esc(d.rejectionReason||'Rejected')}</div>`:`<div style="background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:16px 12px;margin-bottom:8px"><div style="display:flex">${stepper}</div></div>`}
     ${controls}
-    <div style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Documents</div><span style="font-size:0.78rem;font-weight:700;color:${dp>=80?'var(--c-green)':dp>=40?'var(--c-amber)':'var(--c-red)'}" id="dlDocPct">${dp}%</span></div>
+    ${admin&&!isRejectStage(cur)?`<div style="margin-top:14px;background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-md);padding:12px">
+      <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--c-text3);margin-bottom:8px">Blocker &amp; follow-up <span style="font-weight:500;text-transform:none">· saves on change</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <select class="form-select" id="dlBlockerSel" style="font-size:0.78rem">${DL_BLOCKERS.map(b=>`<option value="${b.code}" ${b.code===(d.blockerCode||'')?'selected':''}>${esc(b.label)}</option>`).join('')}</select>
+        <select class="form-select" id="dlOwnerSel" style="font-size:0.78rem"><option value="">— Owner —</option>${DL_OWNERS.map(o=>`<option ${o===(d.blockerOwner||'')?'selected':''}>${esc(o)}</option>`).join('')}</select>
+        <input type="date" class="form-input" id="dlFollowSel" value="${esc(d.followupDate||'')}" style="font-size:0.78rem">
+      </div>
+    </div>`:''}
+    <div style="margin-top:18px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3)">Documents <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· pending items aged</span></div><span style="font-size:0.78rem;font-weight:700;color:${dp>=80?'var(--c-green)':dp>=40?'var(--c-amber)':'var(--c-red)'}" id="dlDocPct">${dp}%</span></div>
     <div class="doc-grid">${docs}</div></div>
     ${(()=>{const dlog=(d.stageHistory||d.history||d.changeLog||d.changeHistory||d.activity||[]).slice().reverse();const dn=DOC_KEYS.filter(k=>d.documents?.[k]).length;const baseline=`<div style="font-size:0.78rem;color:var(--c-text2);background:var(--c-bg2);border:1px dashed var(--c-border2);border-radius:var(--r-md);padding:14px 16px"><div style="color:var(--c-text3);margin-bottom:9px"><i class="fas fa-circle-info" style="opacity:0.6;margin-right:5px"></i>No detailed history was recorded before now — it builds from here on. Current state:</div><div style="display:flex;flex-direction:column;gap:5px">${d.startDate?`<div>• Onboarding started: <b>${fmtDate(d.startDate)}</b></div>`:''}<div>• Stage reached: <b>${esc(d.currentStage||'Interested')}</b></div><div>• Documents: <b>${docPct(d.documents)}%</b> (${dn}/${DOC_KEYS.length} complete)</div>${d.updatedAt?`<div>• Last updated: <b>${fmtDate(d.updatedAt)}</b></div>`:''}</div></div>`;return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${dlog.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${dlog.length} ${dlog.length===1?'entry':'entries'}</span>`:''}</div>${dlog.length?`<div style="max-height:200px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${dlog.map(histRowHTML).join('')}</div>`:baseline}</div>`;})()}`;
   if(admin){
@@ -2118,8 +2208,20 @@ function openDLDetail(id){
     document.getElementById('dlReinstateBtn')?.addEventListener('click',()=>doMoveStage(id,'Interested'));
     document.querySelectorAll('#dlDetailBody input[data-dockey]').forEach(cb=>cb.addEventListener('change',()=>updateDLDoc(id,cb.dataset.dockey,cb.checked)));
     document.querySelectorAll('#dlDetailBody .doc-link-btn').forEach(b=>b.addEventListener('click',()=>setDocLink(id,b.dataset.dockey)));
+    const blSel=document.getElementById('dlBlockerSel'),owSel=document.getElementById('dlOwnerSel'),fuSel=document.getElementById('dlFollowSel');
+    const saveMeta=()=>updateDLMeta(id,{blockerCode:blSel?.value||'',blockerOwner:owSel?.value||'',followupDate:fuSel?.value||''});
+    blSel?.addEventListener('change',saveMeta);owSel?.addEventListener('change',saveMeta);fuSel?.addEventListener('change',saveMeta);
   }
   openModal('dlDetailModal');
+}
+/* inline blocker / owner / follow-up save (retry-queued) */
+function updateDLMeta(id,fields){
+  const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
+  Object.assign(d,fields); /* optimistic */
+  const note=`Blocker ${fields.blockerCode?(DL_BLOCKER_LABEL[fields.blockerCode]||fields.blockerCode):'cleared'}${fields.blockerOwner?' ('+fields.blockerOwner+')':''}; follow-up ${fields.followupDate||'cleared'}`;
+  const hist=(d.stageHistory||[]).concat([{note,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);d.stageHistory=hist;
+  qWrite('Blocker update',()=>updateDoc(doc(db,'dealerOnboarding',id),{...fields,stageHistory:hist,updatedAt:serverTimestamp()}),()=>toast('Saved','success'));
+  renderView();
 }
 async function doMoveStage(id,newStage){
   const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
@@ -2130,6 +2232,7 @@ async function doMoveStage(id,newStage){
     pendingRejectId=id;pendingRejectStage=newStage;
     document.getElementById('rejectTitle').textContent=`Reject — ${d.name}`;
     document.getElementById('rejectReason').value='';
+    const rs=document.getElementById('reject-reason');if(rs){rs.selectedIndex=0;rs.classList.remove('input-error');}
     openModal('rejectModal');return;
   }
   /* Reinstating from a reject state */
@@ -2142,16 +2245,15 @@ async function doMoveStage(id,newStage){
   if(ci>=0&&ni>=0&&Math.abs(ci-ni)!==1){toast(`Move one stage at a time (${cur} → ${newStage} skips steps)`,'warning');return;}
   if(await showConfirm(`Move "${d.name}" from "${cur}" to "${newStage}"?`,'Change Stage'))execDLStage(id,newStage,null);
 }
-function execDLStage(id,newStage,reason){
+function execDLStage(id,newStage,reason,reasonCode){
   const d=S.dealers.find(x=>x.id===id);if(!d)return;
   const status=newStage==='Onboarded'?'Completed':isRejectStage(newStage)?'Rejected':'Active';
   const hist=(d.stageHistory||[]).concat([{stage:newStage,reason:reason||null,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);
   const upd={currentStage:newStage,status,stageHistory:hist,updatedAt:serverTimestamp()};
   if(reason)upd.rejectionReason=reason;
-  d.currentStage=newStage;d.status=status;d.stageHistory=hist;if(reason)d.rejectionReason=reason; /* optimistic */
-  updateDoc(doc(db,'dealerOnboarding',id),upd)
-    .then(()=>{toast(`Moved to ${newStage}`,'success');if(newStage==='Onboarded')addNotif('Partner Onboarded',`${d.name} completed onboarding`,'ok',id,'dealer');})
-    .catch(e=>toast('Update failed: '+e.message,'error'));
+  if(isRejectStage(newStage))upd.rejectionCode=reasonCode||'';
+  d.currentStage=newStage;d.status=status;d.stageHistory=hist;if(reason)d.rejectionReason=reason;if(isRejectStage(newStage))d.rejectionCode=reasonCode||''; /* optimistic */
+  qWrite('Stage change',()=>updateDoc(doc(db,'dealerOnboarding',id),upd),()=>{toast(`Moved to ${newStage}`,'success');if(newStage==='Onboarded')addNotif('Partner Onboarded',`${d.name} completed onboarding`,'ok',id,'dealer');});
   closeModal('rejectModal');
   if(currentDlId===id&&document.getElementById('dlDetailModal').classList.contains('on'))openDLDetail(id);
   renderView();
@@ -2165,25 +2267,20 @@ function setDocLink(id,key){
   if(v)links[key]=v;else delete links[key];
   d.docLinks=links;
   const hist=(d.stageHistory||[]).concat([{note:`${DOC_LABELS[key]} link ${v?'attached':'removed'}`,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);d.stageHistory=hist;
-  updateDoc(doc(db,'dealerOnboarding',id),{docLinks:links,stageHistory:hist,updatedAt:serverTimestamp()})
-    .then(()=>{toast(v?'Link saved':'Link removed','success');openDLDetail(id);})
-    .catch(e=>toast('Save failed: '+e.message,'error'));
+  qWrite('Document link',()=>updateDoc(doc(db,'dealerOnboarding',id),{docLinks:links,stageHistory:hist,updatedAt:serverTimestamp()}),()=>{toast(v?'Link saved':'Link removed','success');openDLDetail(id);});
 }
 function updateDLDoc(id,key,checked){
   const d=S.dealers.find(x=>x.id===id);if(!d||!isAdmin())return;
   const docs={...(d.documents||{}),[key]:checked};
-  const hist=(d.stageHistory||[]).concat([{note:`${DOC_LABELS[key]||key} ${checked?'marked complete':'unmarked'}`,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);
-  d.documents=docs;d.stageHistory=hist; /* optimistic */
+  const meta={...(d.docMeta||{})};const ts=todayStr();
+  const m={...(meta[key]||{})};if(!m.req)m.req=d.startDate||ts;if(checked)m.rec=ts;else delete m.rec;meta[key]=m;
+  const hist=(d.stageHistory||[]).concat([{note:`${DOC_LABELS[key]||key} ${checked?'received':'unmarked'}`,at:new Date().toISOString(),by:email||'admin'}]).slice(-60);
+  d.documents=docs;d.docMeta=meta;d.stageHistory=hist; /* optimistic */
   const pct=docPct(docs);const pe=document.getElementById('dlDocPct');if(pe){pe.textContent=pct+'%';pe.style.color=pct>=80?'var(--c-green)':pct>=40?'var(--c-amber)':'var(--c-red)';}
-  updateDoc(doc(db,'dealerOnboarding',id),{documents:docs,stageHistory:hist,updatedAt:serverTimestamp()})
-    .then(()=>{
-      /* FIX: do NOT auto-advance the stage. Completing docs makes a partner ELIGIBLE; onboarding stays a deliberate step. */
-      if(pct===100&&d.currentStage!=='Onboarded'&&!isRejectStage(d.currentStage||'')){
-        toast('All documents complete — ready to onboard','info');
-        addNotif('Docs Complete',`${d.name} has all documents — move to Onboarded when ready`,'ok',id,'dealer');
-      }
-    })
-    .catch(e=>toast('Save failed: '+e.message,'error'));
+  qWrite('Document update',()=>updateDoc(doc(db,'dealerOnboarding',id),{documents:docs,docMeta:meta,stageHistory:hist,updatedAt:serverTimestamp()}),()=>{
+    /* completing docs makes a partner ELIGIBLE; onboarding stays a deliberate step */
+    if(pct===100&&d.currentStage!=='Onboarded'&&!isRejectStage(d.currentStage||'')){toast('All documents complete — ready to onboard','info');addNotif('Docs Complete',`${d.name} has all documents — move to Onboarded when ready`,'ok',id,'dealer');}
+  });
   renderView();
 }
 function openDLEdit(id){
@@ -2195,6 +2292,9 @@ function openDLEdit(id){
   const dzsel=document.getElementById('dl-zone');if(dzsel)dzsel.value=d.zone||'';
   fillRMSelect('dl-rm',d.rm||'','dl-zone');
   document.getElementById('dl-start').value=d.startDate||'';
+  const fu=document.getElementById('dl-followup');if(fu)fu.value=d.followupDate||'';
+  const bl=document.getElementById('dl-blocker');if(bl)bl.value=d.blockerCode||'';
+  const ow=document.getElementById('dl-owner');if(ow)ow.value=d.blockerOwner||'';
   document.getElementById('dl-lat').value=d.lat||'';
   document.getElementById('dl-lng').value=d.lng||'';
   document.querySelector('#addDLModal .modal-title').textContent='Edit Partner';
@@ -2208,7 +2308,7 @@ async function deleteDL(id){
   catch(e){toast('Delete failed: '+e.message,'error');}
 }
 
-/* ── PIPELINE VIEW (now drag-and-drop) ── */
+/* ── PIPELINE VIEW (drag-and-drop) ── */
 function renderPipeline(){
   const c=document.getElementById('content');if(!c)return;
   c.innerHTML=`
@@ -2255,9 +2355,7 @@ async function doPLMove(id,newStage){
   if(!await showConfirm(`Move "${p.name}" from "${cur}" to "${newStage}"?`,'Change Stage'))return;
   const cl=(p.changeLog||[]).concat([{from:cur,to:newStage,field:'stage',at:new Date().toISOString(),by:email||'admin',text:`Stage: ${cur} → ${newStage}`}]).slice(-60);
   p.stage=newStage;p.changeLog=cl; /* optimistic */
-  updateDoc(doc(db,'pipeline',id),{stage:newStage,changeLog:cl,updatedAt:serverTimestamp()})
-    .then(()=>{toast(`Moved to ${newStage}`,'success');if(newStage==='Live')addNotif('Lead Live',`${p.name} is now Live`,'ok',id,null);})
-    .catch(e=>toast('Update failed: '+e.message,'error'));
+  qWrite('Lead stage change',()=>updateDoc(doc(db,'pipeline',id),{stage:newStage,changeLog:cl,updatedAt:serverTimestamp()}),()=>{toast(`Moved to ${newStage}`,'success');if(newStage==='Live')addNotif('Lead Live',`${p.name} is now Live`,'ok',id,null);});
   renderView();
 }
 function openPLDetail(id){
@@ -2322,7 +2420,7 @@ function renderMap(){
   setTimeout(()=>{
     const el=document.getElementById('mapContainer');
     if(!el){return;}
-    if(typeof L==='undefined'){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--c-text3);font-size:0.82rem">Map library (Leaflet) failed to load from unpkg.com. Your network may be blocking it — the rest of the app is unaffected.</div>';return;}
+    if(typeof L==='undefined'){el.innerHTML='<div style="padding:30px;text-align:center;color:var(--c-text3);font-size:0.82rem">Map library (Leaflet) failed to load from the CDN (cdnjs). Your network may be blocking it — the rest of the app is unaffected.</div>';return;}
     if(view!=='map'){return;} /* user navigated away before init */
     if(el._leaflet_id){return;} /* already initialised — avoid double-init crash */
     const showMsg=t=>{const m=document.getElementById('mapMsg');if(m){m.innerHTML=t;m.style.display='block';}};
@@ -2408,6 +2506,7 @@ function renderInsights(){
   <div class="analytics-grid">
     <div class="chart-card"><div class="chart-title"><i class="fas fa-chart-pie"></i> Showroom Risk Breakdown</div><canvas id="ch-risk"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-filter"></i> Partner Funnel</div><canvas id="ch-funnel"></canvas></div>
+    <div class="chart-card"><div class="chart-title"><i class="fas fa-user-slash"></i> Partner Drop-off by Reason</div><canvas id="ch-dropoff"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-stopwatch"></i> Avg Phase Cycle Time vs Plan <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500">(days over/under)</span></div><canvas id="ch-cycle"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-triangle-exclamation"></i> Delay Causes (by reason code)</div><canvas id="ch-reasons"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-clipboard-check"></i> Partner Document Completion</div><canvas id="ch-docs"></canvas></div>
@@ -2427,14 +2526,23 @@ function buildCharts(){
   const fStages=DEALER_STAGES.slice(0,5);const fCounts=fStages.map(st=>S.dealers.filter(d=>(d.currentStage||'Interested')===st).length);
   const elF=document.getElementById('ch-funnel');
   if(elF)charts.funnel=new Chart(elF,{type:'bar',data:{labels:fStages,datasets:[{data:fCounts,backgroundColor:['#3B82F6','#8B5CF6','#F59E0B','#F97316','#10B981'],borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{ticks:tickFont,grid:gridOpt,beginAtZero:true},y:{ticks:tickFont,grid:{display:false}}}}});
-  /* cycle variance per phase (NEW) */
+  /* partner drop-off by reason code (NEW) — counts rejected partners by structured reason */
+  const dropCounts={};const rejected=S.dealers.filter(isDLRej);
+  rejected.forEach(d=>{const code=d.rejectionCode||'other';dropCounts[code]=(dropCounts[code]||0)+1;});
+  const dEntries=Object.entries(dropCounts).sort((a,b)=>b[1]-a[1]);
+  const elDr=document.getElementById('ch-dropoff');
+  if(elDr){
+    if(dEntries.length){charts.dropoff=new Chart(elDr,{type:'doughnut',data:{labels:dEntries.map(([k])=>REJECT_REASON_LABEL[k]||k),datasets:[{data:dEntries.map(([,v])=>v),backgroundColor:['#EF4444','#F59E0B','#8B5CF6','#3B82F6','#EC4899','#06B6D4','#F97316','#10B981','#6B7280'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{...tickFont,padding:8,usePointStyle:true,boxWidth:8}},datalabels:{display:false}},cutout:'58%'}});}
+    else{const ctx=elDr.getContext('2d');ctx.font='12px Inter';ctx.fillStyle=C.text3;ctx.textAlign='center';ctx.fillText('No partner drop-offs recorded',elDr.width/2,elDr.height/2);}
+  }
+  /* cycle variance per phase */
   const varAgg={};PHASES.forEach(p=>varAgg[p.id]={sum:0,n:0});
   S.showrooms.forEach(s=>{phaseCycles(s).forEach(pc=>{if(pc.variance!=null){varAgg[pc.id].sum+=pc.variance;varAgg[pc.id].n++;}});});
   const cycLabels=PHASES.map(p=>p.name.length>14?p.name.slice(0,13)+'…':p.name);
   const cycData=PHASES.map(p=>varAgg[p.id].n?Math.round(varAgg[p.id].sum/varAgg[p.id].n):0);
   const elC=document.getElementById('ch-cycle');
   if(elC)charts.cycle=new Chart(elC,{type:'bar',data:{labels:cycLabels,datasets:[{data:cycData,backgroundColor:cycData.map(v=>v>0?'#EF4444':v<0?'#10B981':'#6B7280'),borderRadius:5}]},options:{plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw>0?'+':''}${ctx.raw}d vs plan`}}},scales:{x:{ticks:{...tickFont,maxRotation:60,minRotation:40},grid:{display:false}},y:{ticks:tickFont,grid:gridOpt,title:{display:true,text:'days over (+) / under (−)',color:C.text3,font:{size:9}}}}}});
-  /* delay reasons (NEW) */
+  /* delay reasons */
   const reasonCounts={};S.showrooms.forEach(s=>PHASES.forEach(p=>{const rc=s.data?.[p.id]?.reasonCode;if(rc)reasonCounts[rc]=(reasonCounts[rc]||0)+1;}));
   const rEntries=Object.entries(reasonCounts).sort((a,b)=>b[1]-a[1]);
   const elRe=document.getElementById('ch-reasons');
@@ -2483,7 +2591,6 @@ function renderZones(){
       </div>
     </div>`;
   };
-  /* RM leaderboard */
   const rms=[...new Set([...S.showrooms,...S.dealers,...S.pipeline].map(r=>r.rm).filter(Boolean))];
   const rmStat=rm=>{
     const srs=S.showrooms.filter(s=>s.rm===rm),actSr=srs.filter(s=>!isSRDone(s));
@@ -2505,6 +2612,47 @@ function renderZones(){
   ${rmTable}`;
 }
 
+/* ── EXCEPTIONS (one unified "what's broken right now" surface) ── */
+let excSort=localStorage.getItem('ais_exc_sort')||'severity',excRm='all',excType='all',_excRows=[];
+function buildExceptions(){
+  const out=[];const t=today0();const sevRank={critical:0,warning:1,info:2};
+  activeSR().forEach(s=>{const lvl=srLevel(s);if(lvl==='critical'||lvl==='warning'){const st=srStats(s),b=st.blocking,r=srRisk(s);out.push({type:'sr',kind:'Showroom',severity:lvl,name:s.name,issue:b?`${b.phase} · ${b.days}d behind${st.cascading?` · ${st.cascading} cascading`:''}`:`Forecast misses target by ~${r.projMiss}d`,rm:s.rm||'Unassigned',zone:s.zone||'—',metric:st.max||r.projMiss,metricText:(st.max||r.projMiss)+'d',id:s.id,nudge:()=>nudgeFromSR(s.id),open:()=>openSRDetail(s.id)});}});
+  activeSR().forEach(s=>{if(srLevel(s)!=='ok'||!s.startDate||isSRDone(s))return;const ds=PHASES.map(p=>s.data?.[p.id]?.actualDate).filter(Boolean).map(x=>pd(x).getTime());const last=ds.length?new Date(Math.max(...ds)):pd(s.startDate);const idle=dayDiff(last,t);if(idle>=14)out.push({type:'sr',kind:'Showroom',severity:'warning',name:s.name,issue:`Stalled · no phase completed in ${idle}d`,rm:s.rm||'Unassigned',zone:s.zone||'—',metric:idle,metricText:idle+'d idle',id:s.id,nudge:()=>nudgeFromSR(s.id),open:()=>openSRDetail(s.id)});});
+  activeSR().forEach(s=>{const tg=srTargetDate(s);if(tg&&!isSRDone(s)&&dayDiff(t,tg)<0&&srLevel(s)==='ok'){const od=dayDiff(t,tg);out.push({type:'sr',kind:'Showroom',severity:'warning',name:s.name,issue:`Past committed/target date by ${-od}d`,rm:s.rm||'Unassigned',zone:s.zone||'—',metric:-od,metricText:(-od)+'d over',id:s.id,nudge:()=>nudgeFromSR(s.id),open:()=>openSRDetail(s.id)});}});
+  activeDL().forEach(d=>{const tl=dlTimeline(d);if(tl.level==='critical'||tl.level==='warning'){const od=oldestPendingDoc(d);out.push({type:'dl',kind:'Partner',severity:tl.level,name:d.name,issue:`${d.currentStage} · ${tl.delay}d late${d.blockerCode?' · '+DL_BLOCKER_LABEL[d.blockerCode]:''}${od?' · '+od.label+' '+od.age+'d':''}`,rm:d.rm||'Unassigned',zone:d.zone||'—',metric:tl.delay,metricText:tl.delay+'d late',id:d.id,nudge:()=>nudgeFromDL(d.id),open:()=>openDLDetail(d.id)});}});
+  S.dealers.forEach(d=>{if(isDLDone(d)||isDLRej(d)||!d.followupDate)return;const due=dayDiff(t,d.followupDate);if(due<=0)out.push({type:'dl',kind:'Partner',severity:'warning',name:d.name,issue:`Follow-up ${due<0?(-due)+'d overdue':'due today'}`,rm:d.rm||'Unassigned',zone:d.zone||'—',metric:Math.max(0,-due),metricText:due<0?(-due)+'d':'today',id:d.id,nudge:()=>nudgeFromDL(d.id),open:()=>openDLDetail(d.id)});});
+  S.pipeline.forEach(p=>{if(p.stage==='Live'||!p.followupDate)return;const due=dayDiff(t,p.followupDate);if(due<=0)out.push({type:'pl',kind:'Lead',severity:'warning',name:p.name,issue:`Follow-up ${due<0?(-due)+'d overdue':'due today'}`,rm:p.rm||'Unassigned',zone:p.zone||'—',metric:Math.max(0,-due),metricText:due<0?(-due)+'d':'today',id:p.id,nudge:()=>openNudge({kind:'pl',id:p.id,name:p.name,mobile:p.mobile,contact:p.contact,context:{city:p.city,stage:p.stage,rm:p.rm}}),open:()=>openPLDetail(p.id)});});
+  return out.sort((a,b)=>sevRank[a.severity]-sevRank[b.severity]||b.metric-a.metric);
+}
+function renderExceptions(){
+  const c=document.getElementById('content');if(!c)return;
+  let rows=buildExceptions();_excRows=rows;
+  const rms=[...new Set(rows.map(r=>r.rm))].sort();
+  const types=[['all','All'],['sr','Showrooms'],['dl','Partners'],['pl','Leads']];
+  if(excRm!=='all')rows=rows.filter(r=>r.rm===excRm);
+  if(excType!=='all')rows=rows.filter(r=>r.type===excType);
+  if(excSort==='age')rows=rows.slice().sort((a,b)=>b.metric-a.metric);
+  else if(excSort==='rm')rows=rows.slice().sort((a,b)=>a.rm.localeCompare(b.rm));
+  else if(excSort==='zone')rows=rows.slice().sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
+  const crit=rows.filter(r=>r.severity==='critical').length;
+  c.innerHTML=`
+  <div class="filter-bar">
+    <div class="fpill"><i class="fas fa-filter"></i><select id="excType">${types.map(([k,l])=>`<option value="${k}" ${excType===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="fpill"><i class="fas fa-user-tie"></i><select id="excRm"><option value="all">All RMs</option>${rms.map(r=>`<option value="${esc(r)}" ${excRm===r?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+    <div class="fpill"><i class="fas fa-sort"></i><select id="excSort"><option value="severity" ${excSort==='severity'?'selected':''}>Severity</option><option value="age" ${excSort==='age'?'selected':''}>Age / delay</option><option value="rm" ${excSort==='rm'?'selected':''}>RM</option><option value="zone" ${excSort==='zone'?'selected':''}>Zone</option></select></div>
+    <button class="btn btn-ghost btn-sm" id="excResetBtn"><i class="fas fa-rotate-left"></i></button>
+    <span style="font-size:0.7rem;color:var(--c-text3);margin-left:auto">${crit} critical · ${rows.length} shown</span>
+  </div>
+  <div class="sh"><div><span class="sh-title">Exceptions — overdue &amp; blocked</span><span class="sh-count">${rows.length}</span></div></div>
+  ${rows.length?`<div style="overflow-x:auto"><table class="phase-table"><thead><tr><th>Type</th><th>Name</th><th>Issue</th><th>RM</th><th>Zone</th><th>Age</th><th></th></tr></thead><tbody>${rows.map((r,i)=>`<tr data-exci="${i}" style="cursor:pointer"><td data-label="Type"><span class="chip ${r.severity==='critical'?'chip-crit':'chip-warn'}" style="font-size:0.58rem">${esc(r.kind)}</span></td><td data-label="Name"><strong>${esc(r.name)}</strong></td><td data-label="Issue">${esc(r.issue)}</td><td data-label="RM">${esc(r.rm)}</td><td data-label="Zone">${esc(r.zone)}</td><td data-label="Age" style="white-space:nowrap;color:${r.severity==='critical'?'var(--c-red)':'var(--c-amber)'};font-weight:600">${esc(r.metricText)}</td><td data-label=""><button class="btn btn-sm wa-btn" data-excnudge="${i}" title="Nudge"><i class="fas fa-paper-plane"></i></button></td></tr>`).join('')}</tbody></table></div>`:`<div class="empty-state"><i class="fas fa-circle-check" style="color:var(--c-green)"></i><h3>No exceptions</h3><p>${_excRows.length?'Nothing matches the current filters.':'Everything is on track — no overdue or blocked items.'}</p></div>`}`;
+  c.querySelectorAll('tr[data-exci]').forEach(tr=>tr.addEventListener('click',e=>{if(e.target.closest('[data-excnudge]'))return;rows[+tr.dataset.exci]?.open();}));
+  c.querySelectorAll('[data-excnudge]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();rows[+b.dataset.excnudge]?.nudge();}));
+  document.getElementById('excType')?.addEventListener('change',e=>{excType=e.target.value;renderExceptions();});
+  document.getElementById('excRm')?.addEventListener('change',e=>{excRm=e.target.value;renderExceptions();});
+  document.getElementById('excSort')?.addEventListener('change',e=>{excSort=e.target.value;localStorage.setItem('ais_exc_sort',excSort);renderExceptions();});
+  document.getElementById('excResetBtn')?.addEventListener('click',()=>{excType='all';excRm='all';excSort='severity';renderExceptions();});
+}
+
 /* ── DATA HEALTH ── */
 function renderDataQuality(){
   const issues=[];
@@ -2522,7 +2670,6 @@ function renderDataQuality(){
   return issues.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--c-border);font-size:0.78rem"><i class="fas fa-${i.sev==='crit'?'circle-exclamation':'triangle-exclamation'}" style="color:var(--${i.sev==='crit'?'c-red':'c-amber'})"></i> ${esc(i.t)}</div>`).join('');
 }
 
-/* ── SETTINGS VIEW ── */
 /* ── RM MANAGER (Settings) ── */
 let _rmDraft=[];
 function _rmDataCount(v){return [...S.showrooms,...S.dealers,...S.pipeline,...S.properties].filter(r=>String(r.rm||'').trim()===v).length;}
@@ -2632,11 +2779,11 @@ function renderSettings(){
     <div class="setting-card">
       <h3><i class="fas fa-circle-info"></i> About</h3>
       <div style="font-size:0.8rem;color:var(--c-text2);line-height:1.7">
-        <div><strong>AIS Expansion OS</strong> · v8.0</div>
+        <div><strong>AIS Expansion OS</strong> · v9.0</div>
         <div>Operations Intelligence Platform</div>
         <div style="margin-top:8px;color:var(--c-text3)">Firebase project: ais-showroom-dashboard</div>
         <div style="color:var(--c-text3)">Records: ${S.showrooms.length} SR · ${S.dealers.length} CP · ${S.pipeline.length} leads · ${S.properties.length} props</div>
-        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v8.0</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v9.0</button>
       </div>
     </div>
   </div>`;
@@ -2667,49 +2814,33 @@ function renderSettings(){
 
 /* ── WHAT'S NEW / IMPROVEMENTS VIEW ── */
 const IMPROVEMENTS=[
+  {group:'v9.0 — follow-up & integrity wave',ico:'fa-bolt',col:'#3B82F6',items:[
+    {t:'Partner blockers + owner + follow-up date',badge:'done',d:'Partners now carry a structured blocker (GST issue, legal review, payment, unresponsive…), an accountable owner (AIS / Dealer / Legal / Finance), and a follow-up date — editable inline from the partner detail and surfaced in Today and Exceptions when due. The same "why is this stuck and who owns it" the showroom phases already had.'},
+    {t:'Unified Exceptions view',badge:'done',d:'A single screen listing everything overdue or blocked across showrooms, partners and leads — filterable by type/RM and sortable by severity, age, RM or zone. The "what is broken right now" surface for a review call, with one-tap nudge on every row. A critical-count badge sits on the nav.'},
+    {t:'Document-level aging',badge:'done',d:'Each pending document now shows how long it has been outstanding (amber after 7 days, red after 14), and received documents stamp a received date. The oldest pending document and its age surface in the partner action and exception row, so you chase the right document first.'},
+    {t:'Structured drop-off reasons + chart',badge:'done',d:'Rejecting a partner now requires a reason category (financial, location, docs, competitor, unresponsive…) with optional detail. A new Insights chart breaks down partner drop-off by reason, so leaks in the funnel are finally visible.'},
+    {t:'"My items" focus on Today',badge:'done',d:'A focus selector on the Today feed scopes every action to a single RM (remembered across sessions), so each rep gets a personal worklist instead of the whole network.'},
+    {t:'Failed-write retry queue',badge:'done',d:'Optimistic edits that Firestore rejected used to vanish silently on the next sync. Failed writes are now queued and retried with backoff (and on reconnect), with a pending count shown in the sync pill — no more silent data loss on flaky site networks.'},
+    {t:'Notifications survive refresh',badge:'done',d:'Alerts are now persisted locally, so the notification history and unread state are no longer wiped on every reload.'},
+    {t:'Commitment slippage log',badge:'done',d:'Changing a showroom\'s committed launch date, start date or plan template is now recorded in its change history with who and when — exposing serial date-pushing.'},
+    {t:'Out-of-sequence phase warning',badge:'done',d:'Marking a later phase done before an earlier one now raises a non-blocking warning in the tracker and on save, catching data-entry slips that would otherwise corrupt progress and forecasts.'},
+    {t:'Future-date guard + unsaved-edit flush',badge:'done',d:'Phase actual dates can no longer be set in the future, and closing the tracker mid-edit now flushes the pending save instead of dropping it.'},
+    {t:'Leaflet served from cdnjs',badge:'done',d:'The map library now loads from cdnjs (the steadiest of the app\'s CDNs) instead of unpkg, reducing map-load failures behind corporate firewalls. Still pinned to exact 1.9.4.'},
+  ]},
   {group:'v8.0 — utility & sustainability wave',ico:'fa-rocket',col:'#10B981',items:[
-    {t:'Smart nudge composer (one-tap chase)',badge:'done',d:'Every action — and the showroom/partner detail views — now has a Nudge button that opens a ready-to-send message, pre-filled with the site, the exact blocker, who owns it and days overdue. Pick a tone (Gentle → Firm → Escalate, which loops in the RM) and send via WhatsApp or copy. Turns 10-minute message-writing into one tap.'},
-    {t:'Leading indicators (catch slips early)',badge:'done',d:'The feed now flags problems before they become delays: showrooms that have gone quiet (no phase done in 14 days), partners slowing in a stage before they hit critical, and upcoming milestones due within 5 days. Prevention, not just reaction.'},
-    {t:'Snooze actions',badge:'done',d:'Snooze any action for 7 days to keep the feed focused on what matters now; a count shows how many are hidden, with one click to bring them all back.'},
-    {t:'Partner stage filter + position retained on edit',badge:'done',d:'Partner Onboarding now has a stage filter alongside the RM filter — pick a stage to focus the board on just those partners. And editing any showroom or partner card no longer throws you back to the top/left: your scroll position, open stage column, and filters all stay put.'},
-    {t:'Managed RM list with zones',badge:'done',d:'A Field Reps (RM) manager in Settings — add/remove RMs, give each a zone. Every RM field on every form is now a dropdown fed by this list (no more spelling drift), and picking an RM auto-fills the zone. Includes a one-click "import names from records" and a clean-up tool that remaps misspelt RM variants onto the right name across all records.'},
-    {t:'Map filter tabs',badge:'done',d:'The map now has tabs — All, Showrooms, and the partner stages Shortlisted / CFT Selected / Documentation / Onboarded — to plot just the set you care about. Records still plot by city when they have no exact coordinates (hollow pins).'},
     {t:'Editable SLAs & thresholds (no code)',badge:'done',d:'Admins can tune the risk triggers, partner stage targets, and follow-up window from Settings → SLA & Thresholds. Saved to Firestore and applied on every device, instantly re-scoring all showrooms and partners.'},
     {t:'Per-showroom plan templates',badge:'done',d:'A metro flagship and a small franchise can be measured against different schedules. Pick a template (Standard 90-day, Compact 60-day, Flagship 120-day, or your own) per showroom; all progress, forecast, gantt and risk math follow that curve.'},
-    {t:'Zones & RM scorecards',badge:'done',d:'A new view rolls performance up by zone (health, active sites, average progress, partners, leads) and ranks every RM by critical sites and average delay. Records carry an optional zone.'},
+    {t:'Zones & RM scorecards',badge:'done',d:'A view rolls performance up by zone (health, active sites, average progress, partners, leads) and ranks every RM by critical sites and average delay.'},
     {t:'One-click weekly report (PDF)',badge:'done',d:'Generates a printable executive summary — critical sites, launches due, stuck partners, follow-ups due — in a new tab, ready to print or save as PDF.'},
-    {t:'Follow-up reminders',badge:'done',d:'Set a "follow-up by" date on a pipeline lead and it surfaces in Today when due or overdue, instead of relying only on age.'},
-    {t:'Document links on onboarding',badge:'done',d:'Attach a Drive/SharePoint URL to each partner document, not just a checkbox — so the actual file is one click away.'},
-    {t:'Bulk reassign (RM & zone)',badge:'done',d:'Select multiple records and reassign their RM or set their zone in one action.'},
-    {t:'Data normalization layer',badge:'done',d:'Every record is coerced to a known shape as it loads, so a single malformed or legacy document can no longer break a view (the root cause behind the earlier history glitch).'},
-    {t:'Global error boundary',badge:'done',d:'A thrown error now shows a friendly recoverable message instead of a blank screen, and uncaught errors surface a toast.'},
-    {t:'Pipeline change history',badge:'done',d:'Stage moves on leads are now logged and shown in the lead detail, matching showrooms and partners.'},
-    {t:'App Check scaffold',badge:'config',d:'Firebase App Check is wired and ready — paste a reCAPTCHA v3 site key (one line) to harden the public config against abuse. Disabled by default so nothing breaks.'},
+    {t:'Smart nudge composer',badge:'done',d:'Every action and detail view has a Nudge button that opens a ready-to-send message pre-filled with the site, the blocker, who owns it and days overdue, with tone escalation (Gentle → Firm → Escalate).'},
+    {t:'Managed RM list with zones',badge:'done',d:'A Field Reps (RM) manager in Settings feeds the RM dropdown on every form, with one-click clean-up that remaps misspelt RM variants across all records.'},
+    {t:'Data normalization + error boundary',badge:'done',d:'Every record is coerced to a known shape as it loads, and a thrown error shows a friendly recoverable message instead of a blank screen.'},
   ]},
-  {group:'Showroom KPI — the core overhaul',ico:'fa-gauge-high',col:'#3B82F6',items:[
-    {t:'Time-weighted progress',badge:'done',d:'Progress now weights each phase by its planned duration (e.g. Interior is 20 days, Dimensions is 5), instead of counting every phase as 1/9. A site that cleared the four quick early phases no longer shows ~44% when only ~17% of the schedule is actually behind it.'},
-    {t:'Bottleneck isolation',badge:'done',d:'The earliest incomplete overdue phase is flagged as the true blocker; later phases are shown as "cascading" rather than each being painted red. One root slip no longer makes five phases look independently broken.'},
-    {t:'Predictive risk + committed launch date',badge:'done',d:'Each showroom can carry a committed (promised) launch date. Risk now fires when the forecast projects a miss — before any single phase crosses 10 days overdue — so a site is flagged while there is still time to act, not after.'},
-    {t:'Honest, SPI-based forecast & confidence',badge:'done',d:'Forecast completion uses the weighted progress, and confidence is derived from the Schedule Performance Index (earned plan-days ÷ elapsed days) plus historical overruns — replacing the old cosmetic "20 + progress×0.75" number that always looked confident.'},
-    {t:'Per-phase cycle-time tracking',badge:'done',d:'The system now measures the actual gap between consecutive phase completions versus the planned duration. The new Insights chart shows which phase systematically eats time across all sites — the real lever for cutting delays.'},
-    {t:'Accountable owner + structured delay reasons',badge:'done',d:'Every phase record now carries an Owner (AIS / Dealer / Vendor) and a reason code from a fixed list, instead of free text. Delays can finally be aggregated by cause and by who is accountable (see the new Delay Causes chart).'},
-  ]},
-  {group:'Data integrity & access',ico:'fa-shield-halved',col:'#10B981',items:[
-    {t:'Viewer by default',badge:'done',d:'Unknown or unprovisioned users now default to read-only "viewer" instead of "admin". A missing role record can no longer grant write access by accident.'},
-    {t:'Enforce Firestore Security Rules',badge:'config',d:'Client-side checks (isAdmin / canWrite) only shape the UI — they can be bypassed. Real write protection must live in Firestore Security Rules in the Firebase console. This is a configuration step to verify outside the app, especially because anonymous guest sign-in is enabled.'},
-    {t:'Kanban drags respect stage rules',badge:'done',d:'Dragging a partner card between columns now routes through the same logic as the stepper: one step at a time, and a rejection requires a reason. Previously a drag could jump straight to any stage and skip the rejection-reason capture.'},
-    {t:'Completing documents no longer auto-onboards',badge:'done',d:'Ticking the last document used to silently force a partner to "Onboarded" from any stage. Now it notifies that the partner is eligible and leaves onboarding as a deliberate action.'},
-  ]},
-  {group:'Correctness & reliability',ico:'fa-bug-slash',col:'#F59E0B',items:[
-    {t:'Timezone-safe dates',badge:'done',d:'Date-only values (YYYY-MM-DD) are now parsed as local midnight rather than UTC, so day counts and "overdue" calculations stop drifting by a day in IST.'},
-    {t:'Memoized KPI computation',badge:'done',d:'Showroom stats are computed once per render and reused, and the cache resets each render so optimistic edits always reflect immediately. Removes redundant recomputation across the feed, cards and charts.'},
-    {t:'Consistent forecast number & colour',badge:'done',d:'The forecast cell is now coloured by the same number it displays, compared against the committed/target date — previously the colour and the figure could disagree.'},
-    {t:'Markup & comment cleanup',badge:'done',d:'Fixed a stray closing tag in the partner board and corrected a stale "Claude API" comment to reflect the actual Gemini call.'},
-  ]},
-  {group:'New surfaces',ico:'fa-wand-magic-sparkles',col:'#8B5CF6',items:[
-    {t:'Drag-and-drop pipeline',badge:'done',d:'Expansion pipeline cards are now draggable between stages (with a confirm), matching the partner board.'},
-    {t:'Cycle-time & delay-cause analytics',badge:'done',d:'Insights gains two charts: average phase cycle-time vs plan, and a breakdown of delays by reason code — both powered by the new phase data.'},
-    {t:'This What\'s New view',badge:'done',d:'A permanent in-app changelog documenting every change in v7.0, so the team can see exactly what moved and why.'},
+  {group:'Showroom KPI core (v7)',ico:'fa-gauge-high',col:'#8B5CF6',items:[
+    {t:'Time-weighted progress',badge:'done',d:'Progress weights each phase by its planned duration instead of counting every phase as 1/9, so a site that cleared the quick early phases no longer looks further along than it is.'},
+    {t:'Bottleneck isolation',badge:'done',d:'The earliest incomplete overdue phase is flagged as the true blocker; later phases are shown as cascading rather than each painted red.'},
+    {t:'Predictive, SPI-based forecast',badge:'done',d:'Risk fires when the forecast projects a miss before any phase crosses 10 days overdue, and confidence is derived from the Schedule Performance Index plus historical overruns.'},
+    {t:'Cycle-time + structured delay reasons',badge:'done',d:'Per-phase cycle time vs plan and an Owner + reason code on every phase let delays be aggregated by cause and accountability.'},
   ]},
 ];
 function renderImprovements(){
@@ -2719,13 +2850,12 @@ function renderImprovements(){
   let n=0;
   c.innerHTML=`
   <div class="imp-hero">
-    <h2>What's new in v8.0</h2>
-    <p>v8.0 builds on the v7 showroom-KPI rebuild with a utility &amp; sustainability wave: tunable SLAs, per-showroom plan templates, zone/RM scorecards, a weekly report, follow-up reminders, document links, bulk actions, and hardening (data normalization + an error boundary). Everything below is reflected in the live code.</p>
+    <h2>What's new in v9.0</h2>
+    <p>v9.0 is a follow-up &amp; integrity wave on top of the v8 utility release: partner blockers/owners/follow-ups, a unified Exceptions view, document-level aging, structured drop-off analytics, a "my items" focus, and a failed-write retry queue so nothing is lost on a flaky site network. Everything below is reflected in the live code.</p>
     <div class="imp-stats">
       <div class="imp-stat"><b>${all.length}</b><span>Improvements</span></div>
       <div class="imp-stat"><b style="color:var(--c-green)">${doneN}</b><span>Implemented</span></div>
-      <div class="imp-stat"><b style="color:var(--c-amber)">${cfgN}</b><span>Config to verify</span></div>
-      <div class="imp-stat"><b>2</b><span>Server-side (rules, key proxy)</span></div>
+      <div class="imp-stat"><b style="color:var(--c-blue)">11</b><span>New in v9.0</span></div>
     </div>
   </div>
   ${IMPROVEMENTS.map(g=>`
@@ -2744,7 +2874,7 @@ function renderImprovements(){
           </div>
         </div>`;}).join('')}
     </div>`).join('')}
-  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v7.0 → v8.0</div>`;
+  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v8.0 → v9.0</div>`;
 }
 
 /* ── WEEKLY REPORT (printable / PDF) ── */
@@ -2756,6 +2886,7 @@ function generateWeeklyReport(){
   const dueLaunch=activeSR().map(s=>({s,t:srTargetDate(s)})).filter(x=>x.t&&dayDiff(today0(),x.t)<=21).sort((a,b)=>dayDiff(today0(),a.t)-dayDiff(today0(),b.t));
   const stuckDL=activeDL().filter(d=>dlTimeline(d).level==='critical');
   const followups=S.pipeline.filter(p=>p.followupDate&&p.stage!=='Live'&&dayDiff(today0(),p.followupDate)<=0);
+  const dlFollowups=S.dealers.filter(d=>d.followupDate&&!isDLDone(d)&&!isDLRej(d)&&dayDiff(today0(),d.followupDate)<=0);
   const row=(cells)=>`<tr>${cells.map(c=>`<td>${c}</td>`).join('')}</tr>`;
   const sec=(title,body)=>`<h2>${tx(title)}</h2>${body}`;
   const list=(arr,fn,empty)=>arr.length?`<table>${arr.map(fn).join('')}</table>`:`<p class="muted">${empty}</p>`;
@@ -2782,8 +2913,8 @@ function generateWeeklyReport(){
   </div>
   ${sec('Critical Showrooms — escalate now',list(crit,s=>{const b=srStats(s).blocking;const r=srRisk(s);return row([`<b>${tx(s.name)}</b><br><span class="muted">${tx(s.city||'')} · ${tx(s.rm||'—')}${s.zone?' · '+tx(s.zone):''}</span>`,b?`<span class="red">${tx(b.phase)} · ${b.days}d behind</span>`:`<span class="red">projected miss ${r.projMiss}d</span>`,`${srStats(s).pctW}% done`]);},'No critical showrooms. 🎉'))}
   ${sec('Launches due / overdue (next 3 weeks)',list(dueLaunch,({s,t})=>{const dd=dayDiff(today0(),t);return row([`<b>${tx(s.name)}</b><br><span class="muted">${tx(s.rm||'—')}</span>`,dd<0?`<span class="red">${-dd}d overdue</span>`:`in ${dd}d`,`target ${fmtDate(t)}`]);},'Nothing due in the next three weeks.'))}
-  ${sec('Partners stuck',list(stuckDL,d=>row([`<b>${tx(d.name)}</b><br><span class="muted">${tx(d.city||'')} · ${tx(d.rm||'—')}</span>`,`<span class="red">${tx(d.currentStage)} · ${dlTimeline(d).delay}d late</span>`,`${docPct(d.documents)}% docs`]),'No partners stuck.'))}
-  ${sec('Follow-ups due',list(followups,p=>row([`<b>${tx(p.name)}</b><br><span class="muted">${tx(p.city||'')} · ${tx(p.rm||'—')}</span>`,`due ${fmtDate(p.followupDate)}`,tx(p.stage||'')]),'No follow-ups due.'))}
+  ${sec('Partners stuck',list(stuckDL,d=>row([`<b>${tx(d.name)}</b><br><span class="muted">${tx(d.city||'')} · ${tx(d.rm||'—')}${d.blockerCode?' · '+tx(DL_BLOCKER_LABEL[d.blockerCode]):''}</span>`,`<span class="red">${tx(d.currentStage)} · ${dlTimeline(d).delay}d late</span>`,`${docPct(d.documents)}% docs`]),'No partners stuck.'))}
+  ${sec('Follow-ups due',list([...dlFollowups.map(d=>({n:d.name,c:d.city,r:d.rm,dt:d.followupDate,s:'Partner · '+d.currentStage})),...followups.map(p=>({n:p.name,c:p.city,r:p.rm,dt:p.followupDate,s:'Lead · '+(p.stage||'')}))],x=>row([`<b>${tx(x.n)}</b><br><span class="muted">${tx(x.c||'')} · ${tx(x.r||'—')}</span>`,`due ${fmtDate(x.dt)}`,tx(x.s)]),'No follow-ups due.'))}
   <p class="muted" style="margin-top:30px">Generated from AIS Expansion OS · live data snapshot at ${today.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</p>
   </body></html>`;
   const w=window.open('','_blank');
@@ -2794,9 +2925,9 @@ function generateWeeklyReport(){
 /* ── EXPORT / IMPORT ── */
 function downloadCSV(filename,rows){const csv=rows.map(r=>r.map(cell=>{const s=String(cell==null?'':cell);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function exportSR(){const rows=[['Name','City','Dealer','RM','Mobile','Start','Committed','Stage','Progress%','Forecast(d)','MaxDelay(d)','Status']];S.showrooms.forEach(s=>{const st=srStats(s),fc=forecastSR(s);rows.push([s.name,s.city,s.dealerName||'',s.rm||'',s.mobileNumber||'',s.startDate||'',s.committedDate||'',isSRDone(s)?'Completed':srStage(s).name,st.pctW,fc?fc.p50:'',st.max,srLevel(s)]);});downloadCSV('ais_showrooms.csv',rows);toast('Showrooms exported','success');}
-function exportDL(){const rows=[['Name','Firm','City','RM','Mobile','Stage','Docs%','Start','Status']];S.dealers.forEach(d=>rows.push([d.name,d.firmName||'',d.city||'',d.rm||'',d.mobileNumber||'',d.currentStage||'Interested',docPct(d.documents),d.startDate||'',d.status||'']));downloadCSV('ais_partners.csv',rows);toast('Partners exported','success');}
+function exportDL(){const rows=[['Name','Firm','City','RM','Mobile','Stage','Docs%','Blocker','Owner','FollowUp','Start','Status']];S.dealers.forEach(d=>rows.push([d.name,d.firmName||'',d.city||'',d.rm||'',d.mobileNumber||'',d.currentStage||'Interested',docPct(d.documents),d.blockerCode?DL_BLOCKER_LABEL[d.blockerCode]:'',d.blockerOwner||'',d.followupDate||'',d.startDate||'',d.status||'']));downloadCSV('ais_partners.csv',rows);toast('Partners exported','success');}
 function exportPL(){const rows=[['Name','City','Contact','Mobile','RM','Stage','Created']];S.pipeline.forEach(p=>rows.push([p.name,p.city||'',p.contact||'',p.mobile||'',p.rm||'',p.stage||'',p.createdAt?fmtDate(p.createdAt):'']));downloadCSV('ais_pipeline.csv',rows);toast('Pipeline exported','success');}
-function exportAll(){const data={exported:new Date().toISOString(),version:'7.0',showrooms:S.showrooms,dealers:S.dealers,pipeline:S.pipeline,properties:S.properties};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ais_expansion_backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Full backup downloaded','success');}
+function exportAll(){const data={exported:new Date().toISOString(),version:'9.0',showrooms:S.showrooms,dealers:S.dealers,pipeline:S.pipeline,properties:S.properties};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ais_expansion_backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Full backup downloaded','success');}
 function parseCSV(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const ch=text[i];if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur='';}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;if(cur!==''||row.length){row.push(cur);rows.push(row);row=[];cur='';}}else cur+=ch;}}if(cur!==''||row.length){row.push(cur);rows.push(row);}return rows;}
 async function handleCSVImport(e){
   const file=e.target.files?.[0];if(!file||!isAdmin())return;
@@ -2839,7 +2970,16 @@ async function doAddSR(){
   if(!reqd(['sr-name','sr-city','sr-rm','sr-start'])){toast('Fill required fields','warning');return;}
   const payload={name:val('sr-name'),city:val('sr-city'),dealerName:val('sr-dealer'),mobileNumber:val('sr-mobile'),rm:val('sr-rm'),zone:val('sr-zone'),startDate:val('sr-start'),committedDate:val('sr-commit'),templateId:val('sr-template')||'standard',note:val('sr-note'),lat:val('sr-lat'),lng:val('sr-lng'),updatedAt:serverTimestamp()};
   try{
-    if(editSrId){await updateDoc(doc(db,'showrooms',editSrId),payload);toast('Showroom updated','success');}
+    if(editSrId){
+      const ex=S.showrooms.find(x=>x.id===editSrId)||{};
+      /* re-baseline log — capture date/template changes so serial date-pushing is visible in history */
+      const slip=[];
+      if((ex.committedDate||'')!==(payload.committedDate||''))slip.push({field:'committed launch',from:ex.committedDate?fmtDateShort(ex.committedDate):'none',to:payload.committedDate?fmtDateShort(payload.committedDate):'cleared'});
+      if((ex.startDate||'')!==(payload.startDate||''))slip.push({field:'start date',from:ex.startDate?fmtDateShort(ex.startDate):'none',to:payload.startDate?fmtDateShort(payload.startDate):'cleared'});
+      if((ex.templateId||'standard')!==(payload.templateId||'standard'))slip.push({field:'plan template',from:ex.templateId||'standard',to:payload.templateId||'standard'});
+      if(slip.length)payload.changeLog=(ex.changeLog||[]).concat(slip.map(c=>({...c,at:new Date().toISOString(),by:email||'admin',text:`${c.field}: ${c.from} → ${c.to}`}))).slice(-100);
+      await updateDoc(doc(db,'showrooms',editSrId),payload);toast('Showroom updated','success');
+    }
     else{await addDoc(collection(db,'showrooms'),{...payload,data:{},changeLog:[],createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Showroom created','success');}
     closeModal('addSRModal');resetForm('addSRModal');editSrId=null;document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';
   }catch(e){toast('Save failed: '+e.message,'error');}
@@ -2847,10 +2987,10 @@ async function doAddSR(){
 async function doAddDL(){
   if(!isAdmin())return;
   if(!reqd(['dl-name','dl-city','dl-rm','dl-start'])){toast('Fill required fields','warning');return;}
-  const payload={name:val('dl-name'),firmName:val('dl-firm'),city:val('dl-city'),mobileNumber:val('dl-mobile'),rm:val('dl-rm'),zone:val('dl-zone'),startDate:val('dl-start'),lat:val('dl-lat'),lng:val('dl-lng'),updatedAt:serverTimestamp()};
+  const payload={name:val('dl-name'),firmName:val('dl-firm'),city:val('dl-city'),mobileNumber:val('dl-mobile'),rm:val('dl-rm'),zone:val('dl-zone'),startDate:val('dl-start'),followupDate:val('dl-followup'),blockerCode:val('dl-blocker'),blockerOwner:val('dl-owner'),lat:val('dl-lat'),lng:val('dl-lng'),updatedAt:serverTimestamp()};
   try{
     if(editDlId){await updateDoc(doc(db,'dealerOnboarding',editDlId),payload);toast('Partner updated','success');}
-    else{await addDoc(collection(db,'dealerOnboarding'),{...payload,currentStage:'Interested',status:'Active',documents:{},stageHistory:[{stage:'Interested',at:new Date().toISOString(),by:email||'admin'}],createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Partner created','success');}
+    else{await addDoc(collection(db,'dealerOnboarding'),{...payload,currentStage:'Interested',status:'Active',documents:{},docMeta:{},stageHistory:[{stage:'Interested',at:new Date().toISOString(),by:email||'admin'}],createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Partner created','success');}
     closeModal('addDLModal');resetForm('addDLModal');editDlId=null;document.querySelector('#addDLModal .modal-title').textContent='Add Partner';document.getElementById('addDLBtn').innerHTML='<i class="fas fa-plus"></i> Create Partner';
   }catch(e){toast('Save failed: '+e.message,'error');}
 }
@@ -2867,8 +3007,11 @@ async function doAddProp(){
   catch(e){toast('Save failed: '+e.message,'error');}
 }
 function doConfirmReject(){
-  const reason=val('rejectReason');if(!reason){document.getElementById('rejectReason').classList.add('input-error');toast('A reason is required','warning');return;}
-  if(pendingRejectId&&pendingRejectStage)execDLStage(pendingRejectId,pendingRejectStage,reason);
+  const code=val('reject-reason');const detail=val('rejectReason');
+  if(!code){document.getElementById('reject-reason').classList.add('input-error');toast('Pick a reason category','warning');return;}
+  document.getElementById('reject-reason').classList.remove('input-error');
+  const reason=detail?`${REJECT_REASON_LABEL[code]} — ${detail}`:REJECT_REASON_LABEL[code];
+  if(pendingRejectId&&pendingRejectStage)execDLStage(pendingRejectId,pendingRejectStage,reason,code);
 }
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 
@@ -2888,7 +3031,7 @@ function closeCmd(){document.getElementById('cmdOverlay').classList.remove('on')
 function renderCmd(q){
   q=q.toLowerCase().trim();
   const res=document.getElementById('cmdRes');cmdItems=[];
-  const navs=[['today','Today','fa-bolt'],['showrooms','Showrooms','fa-building'],['partners','Partners','fa-users'],['pipeline','Pipeline','fa-chart-gantt'],['map','Map','fa-map'],['properties','Properties','fa-map-location-dot'],['insights','Insights','fa-chart-line'],['zones','Zones & RMs','fa-sitemap'],['settings','Settings','fa-sliders'],['improvements',"What's New",'fa-clipboard-check']];
+  const navs=[['today','Today','fa-bolt'],['showrooms','Showrooms','fa-building'],['partners','Partners','fa-users'],['pipeline','Pipeline','fa-chart-gantt'],['map','Map','fa-map'],['properties','Properties','fa-map-location-dot'],['insights','Insights','fa-chart-line'],['zones','Zones & RMs','fa-sitemap'],['exceptions','Exceptions','fa-triangle-exclamation'],['settings','Settings','fa-sliders'],['improvements',"What's New",'fa-clipboard-check']];
   navs.filter(n=>!q||n[1].toLowerCase().includes(q)).forEach(n=>cmdItems.push({type:'nav',label:n[1],icon:n[2],meta:'Navigate',fn:()=>{closeCmd();setView(n[0]);}}));
   if(q){
     S.showrooms.filter(s=>`${s.name} ${s.city}`.toLowerCase().includes(q)).slice(0,5).forEach(s=>cmdItems.push({type:'sr',label:s.name,icon:'fa-building',meta:`Showroom · ${s.city||''}`,fn:()=>{closeCmd();openSRDetail(s.id);}}));
@@ -2905,8 +3048,10 @@ function cmdNav(dir){if(!cmdItems.length)return;cmdIdx=(cmdIdx+dir+cmdItems.leng
 /* ── SYNC / REALTIME ── */
 function updateSyncUI(state){
   const dot=document.getElementById('syncDot'),txt=document.getElementById('syncText');if(!dot||!txt)return;
-  dot.className='sync-dot '+state;
-  txt.textContent=state==='live'?'Live · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):state==='syncing'?'Syncing…':'Offline';
+  const n=pendingWrites.length;
+  if(n>0&&state!=='syncing')state='pending';
+  dot.className='sync-dot '+(state==='pending'?'syncing':state);
+  txt.textContent=state==='live'?'Live · '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):state==='syncing'?'Syncing…':state==='pending'?`${n} pending…`:'Offline';
 }
 let prevSRM={},prevDLM={},notifyReady=false;
 function checkAndNotify(){
@@ -2921,6 +3066,7 @@ function updateBadges(){
   const crDL=activeDL().filter(d=>dlTimeline(d).level==='critical').length;
   setBadge('nb-sr',crSR);setBadge('nb-dl',crDL);
   setBadge('nb-today',crSR+crDL);setBadge('bn-today',crSR+crDL);
+  setBadge('nb-exc',buildExceptions().filter(e=>e.severity==='critical').length);
 }
 function onData(){
   if(!firstLoad){firstLoad=true;}
@@ -2970,16 +3116,20 @@ function showApp(){
 }
 
 /* ── WINDOW EXPOSURE (for inline handlers) ── */
-Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem,bulkReassignRM,bulkReassignZone,setDocLink,generateWeeklyReport,openNudge,nudgeFromSR,nudgeFromDL});
+Object.assign(window,{setView,openSRDetail,openDLDetail,openPLDetail,openSREdit,openDLEdit,deleteSR,deleteDL,deleteProp,exportSR,exportDL,exportPL,exportAll,bulkExportCSV,bulkCopyPhones,bulkCopyNames,clearBulk,toggleBulkItem,bulkReassignRM,bulkReassignZone,setDocLink,generateWeeklyReport,openNudge,nudgeFromSR,nudgeFromDL,closeModal});
 
 /* ── INIT / EVENT WIRING ── */
 document.addEventListener('DOMContentLoaded',()=>{
   if(location.protocol==='file:'){const w=document.getElementById('fileProtoWarn');if(w)w.style.display='block';}
   applyTheme(themeId);updateSoundIcon();
+  loadNotifs();renderNotifs();const _u=notifs.filter(n=>!n.read).length;document.getElementById('notifDot')?.classList.toggle('on',_u>0);
   window.addEventListener('error',e=>{console.error('Uncaught:',e.error||e.message);if(firstLoad)toast('An error occurred — see console','error');});
   window.addEventListener('unhandledrejection',e=>{console.error('Unhandled promise rejection:',e.reason);});
   const pls=document.getElementById('pl-stage');if(pls)pls.innerHTML=PL_STAGES.map(s=>`<option>${s}</option>`).join('');
   ['sr-zone','dl-zone','pl-zone'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— Zone —</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');});
+  const dlb=document.getElementById('dl-blocker');if(dlb)dlb.innerHTML=DL_BLOCKERS.map(b=>`<option value="${b.code}">${esc(b.label)}</option>`).join('');
+  const dlo=document.getElementById('dl-owner');if(dlo)dlo.innerHTML='<option value="">— Owner —</option>'+DL_OWNERS.map(o=>`<option>${esc(o)}</option>`).join('');
+  const rjr=document.getElementById('reject-reason');if(rjr)rjr.innerHTML=REJECT_REASONS.map(r=>`<option value="${r.code}">${esc(r.label)}</option>`).join('');
   document.querySelectorAll('.nav-btn,.bn-btn').forEach(b=>b.addEventListener('click',()=>{const v=b.dataset.view;if(v){setView(v);document.getElementById('sidebar')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('on');}}));
   document.getElementById('hamburger')?.addEventListener('click',()=>{document.getElementById('sidebar')?.classList.toggle('open');document.getElementById('overlay')?.classList.toggle('on');});
   document.getElementById('overlay')?.addEventListener('click',()=>{document.getElementById('sidebar')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('on');});
@@ -2987,13 +3137,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('cmdInp')?.addEventListener('input',e=>renderCmd(e.target.value));
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCmd();}
-    else if(e.key==='Escape'){if(document.getElementById('cmdOverlay').classList.contains('on'))closeCmd();else document.querySelectorAll('.modal.on').forEach(m=>m.classList.remove('on'));}
+    else if(e.key==='Escape'){if(document.getElementById('cmdOverlay').classList.contains('on'))closeCmd();else document.querySelectorAll('.modal.on').forEach(m=>closeModal(m.id));}
     else if(document.getElementById('cmdOverlay').classList.contains('on')){if(e.key==='ArrowDown'){e.preventDefault();cmdNav(1);}else if(e.key==='ArrowUp'){e.preventDefault();cmdNav(-1);}else if(e.key==='Enter'){e.preventDefault();cmdItems[cmdIdx]?.fn();}}
   });
   document.getElementById('notifBtn')?.addEventListener('click',e=>{e.stopPropagation();document.getElementById('notifPanel')?.classList.toggle('on');});
   document.addEventListener('click',e=>{if(!e.target.closest('.notif-wrap'))document.getElementById('notifPanel')?.classList.remove('on');});
-  document.getElementById('markAllRead')?.addEventListener('click',()=>{notifs.forEach(n=>n.read=true);renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
-  document.getElementById('clearNotifs')?.addEventListener('click',()=>{notifs=[];renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
+  document.getElementById('markAllRead')?.addEventListener('click',()=>{notifs.forEach(n=>n.read=true);persistNotifs();renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
+  document.getElementById('clearNotifs')?.addEventListener('click',()=>{notifs=[];persistNotifs();renderNotifs();document.getElementById('notifDot')?.classList.remove('on');});
   document.getElementById('addBtn')?.addEventListener('click',()=>{const v=view;if(v==='showrooms'){editSrId=null;resetForm('addSRModal');fillTemplateSelect('standard');fillRMSelect('sr-rm','','sr-zone');document.querySelector('#addSRModal .modal-title').textContent='Add Showroom';document.getElementById('addSRBtn').innerHTML='<i class="fas fa-plus"></i> Create Showroom';openModal('addSRModal');}else if(v==='partners')openAddDL();else if(v==='pipeline'){resetForm('addPLModal');fillRMSelect('pl-rm','','pl-zone');openModal('addPLModal');}else if(v==='properties'){resetForm('addPropModal');fillRMSelect('prop-rm','',null);openModal('addPropModal');}});
   document.getElementById('addSRBtn')?.addEventListener('click',doAddSR);
   document.getElementById('addDLBtn')?.addEventListener('click',doAddDL);
@@ -3008,7 +3158,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('plDelBtn')?.addEventListener('click',async()=>{if(!currentPlId||!isAdmin())return;const p=S.pipeline.find(x=>x.id===currentPlId);if(p&&await showConfirm(`Delete lead "${p.name}"?`,'Delete Lead')){try{await deleteDoc(doc(db,'pipeline',currentPlId));closeModal('plDetailModal');toast('Lead deleted','success');}catch(e){toast('Delete failed','error');}}});
   document.getElementById('rejectConfirmBtn')?.addEventListener('click',doConfirmReject);
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
-  document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on');}));
+  document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
   document.getElementById('confirmOkBtn')?.addEventListener('click',()=>resolveConfirm(true));
   document.getElementById('confirmCancelBtn')?.addEventListener('click',()=>resolveConfirm(false));
   document.getElementById('confirmCloseBtn')?.addEventListener('click',()=>resolveConfirm(false));
