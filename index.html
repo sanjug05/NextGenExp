@@ -420,7 +420,7 @@ canvas{max-height:220px;}
 .toggle.on{background:var(--c-blue);}
 .toggle.on::after{left:21px;}
 .imp-hero{background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.08));border:1px solid var(--c-border2);border-radius:var(--r-2xl);padding:24px 26px;margin-bottom:22px;position:relative;overflow:hidden;}
-.imp-hero::after{content:'v9.1';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
+.imp-hero::after{content:'v9.2';position:absolute;top:-10px;right:18px;font-family:'JetBrains Mono',monospace;font-size:4.4rem;font-weight:700;color:rgba(255,255,255,0.03);letter-spacing:-0.04em;pointer-events:none;}
 .imp-hero h2{font-size:1.35rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;}
 .imp-hero p{font-size:0.82rem;color:var(--c-text2);max-width:640px;line-height:1.6;}
 .imp-stats{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap;}
@@ -548,7 +548,7 @@ canvas{max-height:220px;}
   <div class="sidebar-top">
     <div class="brand">
       <div class="brand-icon"><img src="https://www.aiswindows.com/assets/images/ais-windows-logo.svg" alt="AIS"></div>
-      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v9.1</div></div>
+      <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v9.2</div></div>
     </div>
   </div>
   <nav class="sidebar-nav">
@@ -793,7 +793,11 @@ canvas{max-height:220px;}
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Zone</label><select id="pl-zone" class="form-select"></select></div>
+        <div class="form-group"><label class="form-label">Lead source</label><select id="pl-source" class="form-select"></select></div>
+      </div>
+      <div class="form-row">
         <div class="form-group"><label class="form-label">Follow-up by <span style="font-size:0.62rem;color:var(--c-text3)">(reminder)</span></label><input type="date" id="pl-followup" class="form-input"></div>
+        <div class="form-group"></div>
       </div>
       <div class="form-group"><label class="form-label">Notes</label><textarea id="pl-notes" class="form-textarea" rows="2"></textarea></div>
     </div>
@@ -978,6 +982,7 @@ const DOC_KEYS=['securityDeposit','crmCharges','agreement','gst','pan','aadhaar'
 const DOC_LABELS={securityDeposit:'Security Deposit',crmCharges:'CRM Charges',agreement:'Agreement',gst:'GST Certificate',pan:'PAN Card',aadhaar:'Aadhaar',bankDetails:'Bank Details',cheque:'Cheque',passportPhotos:'Passport Photos',companyRegistration:'Company Registration',spaceFinalized:'Space Finalized'};
 const PL_STAGES=['Lead Generated','Discussion','Site Shared','Site Visit','Financial Evaluation','Approval Pending','Documentation','Agreement Signed','Property Freeze','Design Stage','Live'];
 const PL_COLORS={'Lead Generated':'#6B7280','Discussion':'#3B82F6','Site Shared':'#8B5CF6','Site Visit':'#EC4899','Financial Evaluation':'#F97316','Approval Pending':'#EF4444','Documentation':'#F59E0B','Agreement Signed':'#10B981','Property Freeze':'#06B6D4','Design Stage':'#A78BFA','Live':'#10B981'};
+const LEAD_SOURCES=['Referral','Walk-in','Cold Call','Exhibition / Expo','Social Media','Website','Existing Dealer','Architect / Influencer','Other'];
 const SR_IDEAL=90,DL_IDEAL=22,PAGE=16;
 /* predictive risk thresholds (days) — overdue OR projected miss can trigger status. Mutable: overridden by config/app. */
 let RISK={critOverdue:10,warnOverdue:6,critProjMiss:14,warnProjMiss:7};
@@ -1004,7 +1009,7 @@ async function saveConfig(){
 }
 
 /* ── STATE ── */
-const S={showrooms:[],dealers:[],pipeline:[],properties:[]};
+const S={showrooms:[],dealers:[],pipeline:[],properties:[],snapshots:[]};
 let charts={funnel:null,trend:null,docs:null,phaseC:null,stageC:null,dlByPhase:null,dlPie:null,rmPort:null,rmComp:null,cycle:null,reasons:null,delayByPhase:null,delayPie:null,risk:null,dropoff:null};
 let view='today',unsubs=[],isLoading=false,firstLoad=false;
 let uid=null,email=null,role=null,isGuest=false;
@@ -1210,7 +1215,7 @@ function asObj(v){return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
 function asArr(v){return Array.isArray(v)?v:[];}
 function normSR(d){return{...d,name:d.name||'(unnamed showroom)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',startDate:d.startDate||'',committedDate:d.committedDate||'',templateId:d.templateId||'',data:asObj(d.data),changeLog:asArr(d.changeLog).length?asArr(d.changeLog):asArr(d.history)};}
 function normDL(d){return{...d,name:d.name||'(unnamed partner)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',currentStage:d.currentStage||'Interested',documents:asObj(d.documents),docLinks:asObj(d.docLinks),docMeta:asObj(d.docMeta),blockerCode:d.blockerCode||'',blockerOwner:d.blockerOwner||'',followupDate:d.followupDate||'',stageHistory:asArr(d.stageHistory).length?asArr(d.stageHistory):asArr(d.history)};}
-function normPL(d){return{...d,name:d.name||'(unnamed lead)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',stage:d.stage||'Lead Generated',followupDate:d.followupDate||'',changeLog:asArr(d.changeLog)};}
+function normPL(d){return{...d,name:d.name||'(unnamed lead)',city:d.city||'',rm:d.rm||'',zone:d.zone||'',stage:d.stage||'Lead Generated',source:d.source||'',followupDate:d.followupDate||'',changeLog:asArr(d.changeLog)};}
 function normProp(d){return{...d,name:d.name||'(unnamed property)',city:d.city||'',rm:d.rm||'',status:d.status||'Shortlisted',changeLog:asArr(d.changeLog)};}
 const NORM={showrooms:normSR,dealers:normDL,pipeline:normPL,properties:normProp};
 
@@ -1463,7 +1468,7 @@ function setView(v){
   view=v;_navScrollReset=true; /* navigation starts at the top */
   document.querySelectorAll('.nav-btn,[data-view]').forEach(b=>{b.classList.toggle('active',b.dataset.view===v);b.setAttribute('aria-current',b.dataset.view===v?'page':'false');});
   if(v==='map'){if(leafletMap){try{leafletMap.remove();}catch(e){}}leafletMap=null;}
-  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',zones:'Zones & RM Scorecards',exceptions:'Exceptions',activity:'Activity Feed',settings:'Settings',improvements:"What's New — v9.1"};
+  const titles={today:'Today',showrooms:'Showroom Execution',partners:'Partner Onboarding',pipeline:'Expansion Pipeline',map:'Expansion Map',properties:'Property Tracker',insights:'Insights',zones:'Zones & RM Scorecards',exceptions:'Exceptions',activity:'Activity Feed',settings:'Settings',improvements:"What's New — v9.2"};
   const el=document.getElementById('pageTitle');if(el)el.textContent=titles[v]||v;
   document.title=`${titles[v]||v} | AIS Expansion OS`;
   const addBtn=document.getElementById('addBtn');
@@ -2122,40 +2127,69 @@ function renderPartners(){
   document.getElementById('dlViewBtn')?.addEventListener('click',()=>{dlView=dlView==='kanban'?'cards':'kanban';localStorage.setItem('ais_dlview',dlView);renderPartners();});
   refresh();
 }
+/* ── F: kanban virtualization — columns render a window of cards and reveal more as you scroll (IntersectionObserver). Keeps the DOM light on large boards; drag/drop and click unaffected. ── */
+const KANBAN_PAGE=24;
+function elFromHTML(html){const t=document.createElement('template');t.innerHTML=(html||'').trim();return t.content.firstElementChild;}
+function attachKkCard(card,onOpen){
+  if(!card)return;
+  card.tabIndex=0;card.setAttribute('role','button');
+  card.addEventListener('click',e=>{if(e.target.closest('a'))return;onOpen(card.dataset.id);});
+  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpen(card.dataset.id);}});
+  if(isAdmin()){
+    card.setAttribute('draggable','true');
+    card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.dataset.id);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');});
+    card.addEventListener('dragend',()=>card.classList.remove('dragging'));
+  }
+}
+function wireKanbanDnD(boardEl,onDrop){
+  if(!isAdmin()||!boardEl)return;
+  boardEl.querySelectorAll('.kc').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag-over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('drag-over');const id=e.dataTransfer.getData('text/plain');const stage=col.dataset.stage;if(id&&stage)onDrop(id,stage);});
+  });
+}
+/* columns: [{stage, items, headHTML, footerHTML}] ; opts:{cardHTML(item,stage), attach(el,item,stage)} */
+function mountKanban(boardEl,columns,opts){
+  if(!boardEl)return;
+  boardEl.innerHTML=columns.map(col=>`<div class="kc" data-stage="${esc(col.stage)}">${col.headHTML||''}<div class="kc-body">${col.items.length?'':'<div style="font-size:0.7rem;color:var(--c-text3);text-align:center;padding:14px 0">—</div>'}<div class="kc-sentinel" aria-hidden="true"></div>${col.footerHTML||''}</div></div>`).join('');
+  const io=('IntersectionObserver'in window)?new IntersectionObserver(ents=>{ents.forEach(en=>{if(en.isIntersecting&&en.target.__st)fill(en.target.__st);});},{root:null,rootMargin:'500px'}):null;
+  function fill(st){
+    if(st.shown>=st.items.length)return;
+    const slice=st.items.slice(st.shown,st.shown+KANBAN_PAGE);
+    const frag=document.createDocumentFragment();
+    slice.forEach(it=>{const el=elFromHTML(opts.cardHTML(it,st.stage));if(el){opts.attach(el,it,st.stage);frag.appendChild(el);}});
+    if(st.sentinel)st.body.insertBefore(frag,st.sentinel);else st.body.appendChild(frag);
+    st.shown+=slice.length;
+    if(st.shown>=st.items.length&&st.sentinel){if(io)io.unobserve(st.sentinel);st.sentinel.remove();st.sentinel=null;}
+  }
+  const kcs=boardEl.querySelectorAll('.kc');
+  columns.forEach((col,i)=>{
+    const kc=kcs[i];if(!kc)return;
+    const st={stage:col.stage,items:col.items,shown:0,body:kc.querySelector('.kc-body'),sentinel:kc.querySelector('.kc-sentinel')};
+    if(st.sentinel)st.sentinel.__st=st;
+    fill(st); /* first window */
+    if(io&&st.sentinel)io.observe(st.sentinel);
+    else while(st.shown<st.items.length)fill(st); /* no IO support → render all */
+  });
+}
+function leadCardHTML(p){
+  const stage=p.stage||'Lead Generated';const age=p.createdAt?dayDiff(p.createdAt,today0()):0;const old=age>21&&stage!=='Live';
+  return`<div class="kk" data-id="${p.id}"><div class="kk-name">${esc(p.name)}</div><div class="kk-meta">${esc(p.city||'—')}${p.rm?' · '+esc(p.rm):''}${p.source?` · <span style="color:var(--c-text3)">${esc(p.source)}</span>`:''}</div><div class="kk-footer"><span class="kk-tag" ${old?'style="background:var(--c-warn);color:var(--c-amber)"':''}>${age}d</span>${p.mobile?`<a href="${waLink(p.mobile,'Hi '+(p.contact||p.name))}" target="_blank" onclick="event.stopPropagation()" class="kk-age"><i class="fab fa-whatsapp" style="color:#25D366"></i></a>`:''}</div></div>`;
+}
 function renderDLKanban(body,list,stages){
-  const cols=(stages||DEALER_STAGES).map(stage=>{
+  const columns=(stages||DEALER_STAGES).map(stage=>{
     const items=list.filter(d=>(d.currentStage||'Interested')===stage);
     const isRej=stage.includes('reject');
-    const cards=items.map(buildDLCard).join('')||`<div style="font-size:0.7rem;color:var(--c-text3);text-align:center;padding:14px 0">—</div>`;
-    return`<div class="kc" data-stage="${esc(stage)}">
-      <div class="kc-head"><div class="kc-title"><span class="kc-dot" style="background:${DL_DOTS[stage]}"></span>${esc(stage)}</div><span class="kc-count">${items.length}</span></div>
-      <div class="kc-body">${cards}${!isRej&&isAdmin()?`<button class="kc-add" data-addstage="${esc(stage)}"><i class="fas fa-plus"></i> Add</button>`:''}</div>
-    </div>`;
-  }).join('');
-  body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board" id="dlKanban">${cols}</div></div>`;
-  /* card open + drag */
-  body.querySelectorAll('.kk').forEach(card=>{
-    card.tabIndex=0;card.setAttribute('role','button');
-    card.addEventListener('click',e=>{if(e.target.closest('a'))return;openDLDetail(card.dataset.id);});
-    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDLDetail(card.dataset.id);}});
-    if(isAdmin()){
-      card.setAttribute('draggable','true');
-      card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.dataset.id);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');});
-      card.addEventListener('dragend',()=>card.classList.remove('dragging'));
-    }
+    const headHTML=`<div class="kc-head"><div class="kc-title"><span class="kc-dot" style="background:${DL_DOTS[stage]}"></span>${esc(stage)}</div><span class="kc-count">${items.length}</span></div>`;
+    const footerHTML=(!isRej&&isAdmin())?`<button class="kc-add" data-addstage="${esc(stage)}"><i class="fas fa-plus"></i> Add</button>`:'';
+    return{stage,items,headHTML,footerHTML};
   });
-  if(isAdmin()){
-    body.querySelectorAll('.kc').forEach(col=>{
-      col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag-over');});
-      col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
-      col.addEventListener('drop',e=>{
-        e.preventDefault();col.classList.remove('drag-over');
-        const id=e.dataTransfer.getData('text/plain');const stage=col.dataset.stage;
-        if(id&&stage)doMoveStage(id,stage); /* FIX: route through the SAME rules as the stepper */
-      });
-    });
-    body.querySelectorAll('[data-addstage]').forEach(b=>b.addEventListener('click',()=>{openAddDL();}));
-  }
+  body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board" id="dlKanban"></div></div>`;
+  const boardEl=body.querySelector('#dlKanban');
+  mountKanban(boardEl,columns,{cardHTML:d=>buildDLCard(d),attach:el=>attachKkCard(el,openDLDetail)});
+  wireKanbanDnD(boardEl,doMoveStage); /* route drops through the SAME rules as the stepper */
+  if(isAdmin())boardEl.querySelectorAll('[data-addstage]').forEach(b=>b.addEventListener('click',()=>openAddDL()));
 }
 function renderDLCards(body,list){
   if(!list.length){body.innerHTML=`<div class="card-grid"><div class="empty-state"><i class="fas fa-users" style="color:var(--c-text3)"></i><h3>No partners found</h3><p>${S.dealers.length?'Try adjusting filters.':'Add your first partner.'}</p></div></div>`;return;}
@@ -2371,32 +2405,18 @@ function renderPipeline(){
   <div id="plBody"></div>`;
   const refresh=()=>{
     const q=(document.getElementById('plSearch')?.value||'').toLowerCase().trim();
-    const list=S.pipeline.filter(p=>!q||`${p.name} ${p.city} ${p.rm} ${p.contact||''}`.toLowerCase().includes(q));
+    const list=S.pipeline.filter(p=>!q||`${p.name} ${p.city} ${p.rm} ${p.contact||''} ${p.source||''}`.toLowerCase().includes(q));
     const cnt=document.getElementById('plCount');if(cnt)cnt.textContent=list.length;
     const body=document.getElementById('plBody');if(!body)return;
-    const cols=PL_STAGES.map(stage=>{
+    const columns=PL_STAGES.map(stage=>{
       const items=list.filter(p=>(p.stage||'Lead Generated')===stage);
-      const cards=items.map(p=>{const age=p.createdAt?dayDiff(p.createdAt,today0()):0;const old=age>21&&stage!=='Live';return`<div class="kk" data-id="${p.id}"><div class="kk-name">${esc(p.name)}</div><div class="kk-meta">${esc(p.city||'—')}${p.rm?' · '+esc(p.rm):''}</div><div class="kk-footer"><span class="kk-tag" ${old?'style="background:var(--c-warn);color:var(--c-amber)"':''}>${age}d</span>${p.mobile?`<a href="${waLink(p.mobile,'Hi '+(p.contact||p.name))}" target="_blank" onclick="event.stopPropagation()" class="kk-age"><i class="fab fa-whatsapp" style="color:#25D366"></i></a>`:''}</div></div>`;}).join('')||`<div style="font-size:0.7rem;color:var(--c-text3);text-align:center;padding:14px 0">—</div>`;
-      return`<div class="kc" data-stage="${esc(stage)}"><div class="kc-head"><div class="kc-title"><span class="kc-dot" style="background:${PL_COLORS[stage]}"></span>${esc(stage)}</div><span class="kc-count">${items.length}</span></div><div class="kc-body">${cards}</div></div>`;
-    }).join('');
-    body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board">${cols}</div></div>`;
-    body.querySelectorAll('.kk').forEach(card=>{
-      card.tabIndex=0;card.setAttribute('role','button');
-      card.addEventListener('click',e=>{if(e.target.closest('a'))return;openPLDetail(card.dataset.id);});
-      card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openPLDetail(card.dataset.id);}});
-      if(isAdmin()){
-        card.setAttribute('draggable','true');
-        card.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',card.dataset.id);card.classList.add('dragging');});
-        card.addEventListener('dragend',()=>card.classList.remove('dragging'));
-      }
+      const headHTML=`<div class="kc-head"><div class="kc-title"><span class="kc-dot" style="background:${PL_COLORS[stage]}"></span>${esc(stage)}</div><span class="kc-count">${items.length}</span></div>`;
+      return{stage,items,headHTML,footerHTML:''};
     });
-    if(isAdmin()){
-      body.querySelectorAll('.kc').forEach(col=>{
-        col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag-over');});
-        col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
-        col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('drag-over');const id=e.dataTransfer.getData('text/plain');const stage=col.dataset.stage;if(id&&stage)doPLMove(id,stage);});
-      });
-    }
+    body.innerHTML=`<div class="kanban-scroll-wrap"><div class="kanban-board"></div></div>`;
+    const boardEl=body.querySelector('.kanban-board');
+    mountKanban(boardEl,columns,{cardHTML:p=>leadCardHTML(p),attach:el=>attachKkCard(el,openPLDetail)});
+    wireKanbanDnD(boardEl,doPLMove);
   };
   document.getElementById('plSearch')?.addEventListener('input',debounce(refresh,220));
   refresh();
@@ -2424,14 +2444,24 @@ function openPLDetail(id){
       <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Contact</div>${esc(p.contact||'—')}</div>
       <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Mobile</div>${p.mobile?`<a href="${waLink(p.mobile,'Hi')}" target="_blank" style="color:#25D366">${esc(p.mobile)}</a>`:'—'}</div>
       <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">RM</div>${esc(p.rm||'—')}</div>
+      <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Source</div>${p.source?esc(p.source):'<span style="color:var(--c-text3)">—</span>'}</div>
       <div><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Created</div>${fmtDate(p.createdAt)}</div>
     </div>
     ${p.notes?`<div style="margin-top:14px"><div style="font-size:0.62rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">Notes</div><div style="font-size:0.8rem;color:var(--c-text2);background:var(--c-bg2);border:1px solid var(--c-border);border-radius:var(--r-md);padding:10px 12px">${esc(p.notes)}</div></div>`:''}
     ${p.followupDate?`<div style="margin-top:12px"><span class="chip ${dayDiff(today0(),p.followupDate)<=0?'chip-warn':'chip-info'}"><i class="fas fa-bell"></i> Follow-up ${fmtDate(p.followupDate)}${dayDiff(today0(),p.followupDate)<0?' (overdue)':''}</span></div>`:''}
     ${isAdmin()?`<div style="margin-top:16px"><label class="form-label">Move to stage</label><select class="form-select" id="plStageSel">${PL_STAGES.map(st=>`<option ${st===(p.stage||'Lead Generated')?'selected':''}>${esc(st)}</option>`).join('')}</select></div>`:''}
+    ${isAdmin()?`<div style="margin-top:12px"><label class="form-label">Lead source</label><select class="form-select" id="plSourceSel"><option value="">— Source —</option>${LEAD_SOURCES.map(s=>`<option ${s===(p.source||'')?'selected':''}>${esc(s)}</option>`).join('')}</select></div>`:''}
     ${(()=>{const lg=(p.changeLog||[]).slice().reverse();return`<div style="margin-top:18px"><div style="font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-text3);margin-bottom:8px"><i class="fas fa-clock-rotate-left" style="margin-right:5px"></i>Change History${lg.length?` <span style="font-weight:500;text-transform:none;color:var(--c-text3)">· ${lg.length}</span>`:''}</div>${lg.length?`<div style="max-height:170px;overflow-y:auto;border:1px solid var(--c-border);border-radius:var(--r-md)">${lg.map(histRowHTML).join('')}</div>`:'<div style="font-size:0.74rem;color:var(--c-text3)">No stage changes recorded yet.</div>'}</div>`;})()}`;
   if(isAdmin())document.getElementById('plStageSel')?.addEventListener('change',e=>{closeModal('plDetailModal');doPLMove(id,e.target.value);});
+  if(isAdmin())document.getElementById('plSourceSel')?.addEventListener('change',e=>updateLeadSource(id,e.target.value));
   openModal('plDetailModal');
+}
+function updateLeadSource(id,source){
+  const p=S.pipeline.find(x=>x.id===id);if(!p||!isAdmin())return;const cur=p.source||'';if(cur===source)return;
+  const cl=(p.changeLog||[]).concat([{from:cur||'none',to:source||'cleared',field:'source',at:new Date().toISOString(),by:email||'admin',text:`Source: ${cur||'none'} → ${source||'cleared'}`}]).slice(-60);
+  p.source=source;p.changeLog=cl; /* optimistic */
+  qWrite('Lead source',()=>updateDoc(doc(db,'pipeline',id),{source:source,changeLog:cl,updatedAt:serverTimestamp()}),()=>toast('Source updated','success'));
+  renderView();
 }
 
 /* ── MAP VIEW ── */
@@ -2546,6 +2576,34 @@ async function deleteProp(id){const p=S.properties.find(x=>x.id===id);if(!p||!is
 /* ── INSIGHTS VIEW ── */
 function chartColors(){const cs=getComputedStyle(document.documentElement);return{text:cs.getPropertyValue('--c-text2').trim()||'#8A9CC4',text3:cs.getPropertyValue('--c-text3').trim()||'#4A5C80',grid:'rgba(128,128,128,0.12)'};}
 function destroyCharts(){Object.keys(charts).forEach(k=>{if(charts[k]){try{charts[k].destroy();}catch(e){}charts[k]=null;}});}
+function snapDelta(cur,prev,k){if(!prev)return'';const d=(cur[k]||0)-(prev[k]||0);if(d===0)return'<span style="color:var(--c-text3)">±0</span>';const up=d>0;return`<span style="color:${up?'var(--c-green)':'var(--c-red)'}">${up?'▲':'▼'}${Math.abs(d)}</span>`;}
+function weeklyTrendHTML(){
+  const snaps=(S.snapshots||[]).slice().sort((a,b)=>(a.weekKey||a.id||'').localeCompare(b.weekKey||b.id||''));
+  if(!snaps.length)return '<div class="forecast-band" style="margin-bottom:14px"><div class="fb-title"><i class="fas fa-calendar-week"></i> Weekly KPI Trend</div><p style="color:var(--c-text3);font-size:0.8rem;margin:6px 2px 0">No weekly snapshots yet — the first is captured automatically this week. Week-over-week deltas appear here from next week onward.</p></div>';
+  const cur=snaps[snaps.length-1],prev=snaps[snaps.length-2];
+  const metrics=[['liveSR','Live showrooms'],['onboarded','Onboarded partners'],['docsComplete','Docs complete'],['leadsLive','Leads live'],['avgProg','Avg progress'],['pipeline','Open pipeline']];
+  const cells=metrics.map(([k,lbl])=>`<div class="es" style="padding:10px 12px"><div class="es-label">${lbl}</div><div class="es-val" style="font-size:1.1rem">${cur[k]??0}${k==='avgProg'?'%':''} <span style="font-size:0.7rem;font-weight:600">${snapDelta(cur,prev,k)}</span></div></div>`).join('');
+  const spark=(k,color)=>{const vals=snaps.slice(-8).map(s=>s[k]||0);const max=Math.max(1,...vals);return `<div style="display:flex;align-items:flex-end;gap:3px;height:34px">${vals.map(v=>`<div title="${v}" style="width:10px;background:${color};opacity:0.85;border-radius:2px 2px 0 0;height:${Math.max(3,Math.round(v/max*34))}px"></div>`).join('')}</div>`;};
+  const weeks=snaps.slice(-8).map(s=>(s.weekKey||s.id||'').replace(/^\d+-/,'')).join(' · ');
+  return `<div class="forecast-band" style="margin-bottom:14px">
+    <div class="fb-title"><i class="fas fa-calendar-week"></i> Weekly KPI Trend <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500">latest ${esc(cur.weekKey||cur.id||'')}${prev?' vs '+esc(prev.weekKey||prev.id||''):''}</span></div>
+    <div class="ecard-stats" style="grid-template-columns:repeat(auto-fit,minmax(118px,1fr));margin-top:6px">${cells}</div>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:12px;align-items:flex-end">
+      <div><div style="font-size:0.6rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">Live showrooms</div>${spark('liveSR','#3B82F6')}</div>
+      <div><div style="font-size:0.6rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">Onboarded</div>${spark('onboarded','#10B981')}</div>
+      <div><div style="font-size:0.6rem;color:var(--c-text3);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:4px">Leads live</div>${spark('leadsLive','#A78BFA')}</div>
+      <div style="font-size:0.62rem;color:var(--c-text3);align-self:center">weeks: ${esc(weeks)}</div>
+    </div>
+  </div>`;
+}
+function leadSourceHTML(){
+  const pl=S.pipeline||[];if(!pl.length)return'';
+  const counts={};pl.forEach(p=>{const s=p.source||'Unknown';counts[s]=(counts[s]||0)+1;});
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);const max=Math.max(1,...entries.map(e=>e[1]));const total=pl.length;
+  const palette=['#3B82F6','#8B5CF6','#F59E0B','#EC4899','#10B981','#F97316','#06B6D4','#A78BFA','#6B7280'];
+  const rows=entries.map(([src,n],i)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px"><div style="width:130px;font-size:0.74rem;color:var(--c-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(src)}</div><div style="flex:1;background:var(--c-bg3);border-radius:4px;height:14px;overflow:hidden"><div style="width:${Math.round(n/max*100)}%;height:100%;background:${palette[i%palette.length]};border-radius:4px"></div></div><div style="width:64px;text-align:right;font-size:0.72rem;color:var(--c-text3)">${n} · ${Math.round(n/total*100)}%</div></div>`).join('');
+  return `<div class="chart-card" style="margin-top:14px"><div class="chart-title"><i class="fas fa-diagram-project"></i> Leads by Source <span style="font-size:0.62rem;color:var(--c-text3);font-weight:500">${total} total</span></div><div style="margin-top:10px">${rows}</div></div>`;
+}
 function renderInsights(){
   const c=document.getElementById('content');if(!c)return;
   destroyCharts();
@@ -2553,6 +2611,7 @@ function renderInsights(){
   const fcList=activeSR().map(s=>({s,fc:forecastSR(s)})).filter(x=>x.fc).sort((a,b)=>b.fc.p50-a.fc.p50).slice(0,12);
   const fbHtml=fcList.length?fcList.map(({s,fc})=>{const tgt=s.committedDate&&s.startDate?dayDiff(s.startDate,s.committedDate):planTotal(s);const col=fc.p50<=tgt?'var(--c-green)':fc.p50<=tgt*1.1?'var(--c-amber)':'var(--c-red)';return`<div class="fb-item"><div class="fb-name">${esc(s.name)}</div><div class="fb-conf">${fc.confidence}% confidence · SPI ${fc.spi.toFixed(2)}</div><div class="fb-bar"><div class="fb-fill" style="width:${fc.confidence}%;background:${col}"></div></div><div class="fb-date">~${fc.p50}d · ${fmtDateShort(fc.completionDate)}</div></div>`;}).join(''):'<p style="color:var(--c-text3);font-size:0.8rem">No active showrooms with progress to forecast.</p>';
   c.innerHTML=`
+  ${weeklyTrendHTML()}
   <div class="forecast-band"><div class="fb-title"><i class="fas fa-wand-magic-sparkles"></i> Completion Forecast — time-weighted, SPI-based confidence</div><div class="fb-grid">${fbHtml}</div></div>
   <div class="analytics-grid">
     <div class="chart-card"><div class="chart-title"><i class="fas fa-chart-pie"></i> Showroom Risk Breakdown</div><canvas id="ch-risk"></canvas></div>
@@ -2562,7 +2621,8 @@ function renderInsights(){
     <div class="chart-card"><div class="chart-title"><i class="fas fa-triangle-exclamation"></i> Delay Causes (by reason code)</div><canvas id="ch-reasons"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-clipboard-check"></i> Partner Document Completion</div><canvas id="ch-docs"></canvas></div>
     <div class="chart-card"><div class="chart-title"><i class="fas fa-layer-group"></i> Showrooms by Stage</div><canvas id="ch-stage"></canvas></div>
-  </div>`;
+  </div>
+  ${leadSourceHTML()}`;
   setTimeout(()=>buildCharts(),60);
 }
 function buildCharts(){
@@ -2860,11 +2920,11 @@ function renderSettings(){
     <div class="setting-card">
       <h3><i class="fas fa-circle-info"></i> About</h3>
       <div style="font-size:0.8rem;color:var(--c-text2);line-height:1.7">
-        <div><strong>AIS Expansion OS</strong> · v9.1</div>
+        <div><strong>AIS Expansion OS</strong> · v9.2</div>
         <div>Operations Intelligence Platform</div>
         <div style="margin-top:8px;color:var(--c-text3)">Firebase project: ais-showroom-dashboard</div>
         <div style="color:var(--c-text3)">Records: ${S.showrooms.length} SR · ${S.dealers.length} CP · ${S.pipeline.length} leads · ${S.properties.length} props</div>
-        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v9.1</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="setView('improvements')"><i class="fas fa-clipboard-check"></i> What's new in v9.2</button>
       </div>
     </div>
   </div>`;
@@ -2895,6 +2955,13 @@ function renderSettings(){
 
 /* ── WHAT'S NEW / IMPROVEMENTS VIEW ── */
 const IMPROVEMENTS=[
+  {group:'v9.2 — resilience & insight wave',ico:'fa-wifi',col:'#10B981',items:[
+    {t:'Offline mode + auto-sync on reconnect',badge:'done',d:'The app now detects when you drop offline (a status pill shows "Offline"), keeps queuing your edits, and the moment you reconnect it flushes the queued writes automatically. Combined with the Firestore offline cache, field staff on patchy networks lose nothing.'},
+    {t:'Installable PWA + offline app-shell',badge:'done',d:'Ships with a companion service worker (sw.js) that caches the app shell network-first — so a fresh deploy always lands when online, yet the app still opens with no connection. Firebase traffic is never cached. Drop sw.js beside the HTML to enable; absent, everything still works.'},
+    {t:'Kanban virtualization',badge:'done',d:'Both the pipeline and partner boards now render a window of cards per column and reveal more as you scroll (IntersectionObserver), keeping the DOM light and the board fast even with hundreds of leads. Drag-and-drop and click are unaffected.'},
+    {t:'Lead source tracking',badge:'done',d:'Leads now carry a source (Referral, Walk-in, Exhibition, Website, Architect…), set on creation and editable from the lead detail. Shown on the card and broken down in a new "Leads by Source" panel in Insights — so you can see which channels actually convert.'},
+    {t:'Weekly KPI snapshots + trend',badge:'done',d:'Once a week the app captures a snapshot of headline KPIs (live showrooms, onboarded partners, docs complete, leads live, avg progress, pipeline) to Firestore. Insights now opens with a Weekly KPI Trend panel showing week-over-week deltas and 8-week sparklines.'},
+  ]},
   {group:'v9.1 — depth & accountability wave',ico:'fa-layer-group',col:'#06B6D4',items:[
     {t:'Per-phase promised dates',badge:'done',d:'Each showroom phase can now carry its own promised completion date — not just the one overall launch commitment. It shows as an amber diamond on the gantt and, when the actual date lands past the promise, the tracker flags it (⚑). Vendors and dealers are now held to phase-level deadlines, not just the finish line.'},
     {t:'Evidence link per phase',badge:'done',d:'Attach a photo / Drive / SharePoint URL to any phase as proof of completion, sitting beside the note. Fewer "is it actually done?" calls — the proof travels with the record.'},
@@ -2940,12 +3007,12 @@ function renderImprovements(){
   let n=0;
   c.innerHTML=`
   <div class="imp-hero">
-    <h2>What's new in v9.1</h2>
-    <p>v9.1 is a depth &amp; accountability wave on top of v9.0: per-phase promised dates and evidence links, three-state document verification, a global Activity feed, last-updated freshness and data-gap badges on records, and duplicate detection on add. Everything below is reflected in the live code.</p>
+    <h2>What's new in v9.2</h2>
+    <p>v9.2 is a resilience &amp; insight wave on top of v9.1: offline mode with auto-sync on reconnect, an installable PWA with an offline app-shell, kanban virtualization for large boards, lead source tracking, and weekly KPI snapshots with a trend panel. Everything below is reflected in the live code.</p>
     <div class="imp-stats">
       <div class="imp-stat"><b>${all.length}</b><span>Improvements</span></div>
       <div class="imp-stat"><b style="color:var(--c-green)">${doneN}</b><span>Implemented</span></div>
-      <div class="imp-stat"><b style="color:var(--c-cyan)">7</b><span>New in v9.1</span></div>
+      <div class="imp-stat"><b style="color:var(--c-green)">5</b><span>New in v9.2</span></div>
     </div>
   </div>
   ${IMPROVEMENTS.map(g=>`
@@ -2964,7 +3031,7 @@ function renderImprovements(){
           </div>
         </div>`;}).join('')}
     </div>`).join('')}
-  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v9.0 → v9.1</div>`;
+  <div style="text-align:center;color:var(--c-text3);font-size:0.72rem;padding:10px 0 30px"><i class="fas fa-code-branch"></i> AIS Expansion OS · v9.1 → v9.2</div>`;
 }
 
 /* ── WEEKLY REPORT (printable / PDF) ── */
@@ -3095,7 +3162,7 @@ async function doAddDL(){
 async function doAddPL(){
   if(!isAdmin())return;
   if(!reqd(['pl-name','pl-city','pl-rm'])){toast('Fill required fields','warning');return;}
-  try{await addDoc(collection(db,'pipeline'),{name:val('pl-name'),city:val('pl-city'),contact:val('pl-contact'),mobile:val('pl-mobile'),rm:val('pl-rm'),zone:val('pl-zone'),stage:val('pl-stage')||'Lead Generated',followupDate:val('pl-followup'),notes:val('pl-notes'),createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Lead added','success');closeModal('addPLModal');resetForm('addPLModal');}
+  try{await addDoc(collection(db,'pipeline'),{name:val('pl-name'),city:val('pl-city'),contact:val('pl-contact'),mobile:val('pl-mobile'),rm:val('pl-rm'),zone:val('pl-zone'),stage:val('pl-stage')||'Lead Generated',source:val('pl-source'),followupDate:val('pl-followup'),notes:val('pl-notes'),createdAt:serverTimestamp(),createdBy:email||'admin'});toast('Lead added','success');closeModal('addPLModal');resetForm('addPLModal');}
   catch(e){toast('Save failed: '+e.message,'error');}
 }
 async function doAddProp(){
@@ -3166,10 +3233,31 @@ function updateBadges(){
   setBadge('nb-today',crSR+crDL);setBadge('bn-today',crSR+crDL);
   setBadge('nb-exc',buildExceptions().filter(e=>e.severity==='critical').length);
 }
+/* ── D: weekly KPI snapshots ── */
+let _weeklySnapLoaded=false,_weeklySnapTried=false;
+function isoWeekKey(d){d=new Date(d);const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=dt.getUTCDay()||7;dt.setUTCDate(dt.getUTCDate()+4-day);const yStart=new Date(Date.UTC(dt.getUTCFullYear(),0,1));const wk=Math.ceil((((dt-yStart)/86400000)+1)/7);return dt.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
+function computeKPISnapshot(){
+  const sr=S.showrooms||[],dl=S.dealers||[],pl=S.pipeline||[];
+  const liveSR=sr.filter(isSRDone).length;
+  const avgProg=sr.length?Math.round(sr.reduce((a,s)=>a+srProgressWeighted(s),0)/sr.length):0;
+  const onboarded=dl.filter(isDLDone).length;
+  const docsComplete=dl.filter(d=>docPct(d.documents)===100).length;
+  const leadsLive=pl.filter(p=>(p.stage||'')==='Live').length;
+  return{showrooms:sr.length,liveSR,wipSR:sr.length-liveSR,avgProg,partners:dl.length,onboarded,docsComplete,pipeline:pl.length,leadsLive};
+}
+function maybeWriteWeeklySnapshot(){
+  if(!isAdmin()||!_weeklySnapLoaded||_weeklySnapTried)return;
+  if(!(S.showrooms.length||S.dealers.length||S.pipeline.length))return; /* don't snapshot an empty initial load */
+  const key=isoWeekKey(new Date());
+  if((S.snapshots||[]).some(s=>s.id===key||s.weekKey===key)){_weeklySnapTried=true;return;}
+  _weeklySnapTried=true;
+  setDoc(doc(db,'kpiSnapshots',key),{...computeKPISnapshot(),weekKey:key,at:serverTimestamp(),by:email||'admin'}).catch(e=>{console.warn('weekly snapshot failed',e);_weeklySnapTried=false;});
+}
 function onData(){
   if(!firstLoad){firstLoad=true;}
   _statsCache=new WeakMap();_histOverrunCache=null;
   renderView();checkAndNotify();updateBadges();updateSyncUI('live');
+  maybeWriteWeeklySnapshot();
 }
 function stopRealtime(){unsubs.forEach(u=>{try{u();}catch(e){}});unsubs=[];}
 function startRealtime(){
@@ -3179,6 +3267,7 @@ function startRealtime(){
   unsubs.push(mk('dealerOnboarding','dealers'));
   unsubs.push(mk('pipeline','pipeline'));
   unsubs.push(mk('properties','properties'));
+  unsubs.push(onSnapshot(collection(db,'kpiSnapshots'),snap=>{S.snapshots=snap.docs.map(d=>({id:d.id,...d.data()}));_weeklySnapLoaded=true;onData();},err=>{console.warn('kpiSnapshots',err);_weeklySnapLoaded=true;}));
 }
 
 /* ── AUTH ── */
@@ -3223,7 +3312,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   loadNotifs();renderNotifs();const _u=notifs.filter(n=>!n.read).length;document.getElementById('notifDot')?.classList.toggle('on',_u>0);
   window.addEventListener('error',e=>{console.error('Uncaught:',e.error||e.message);if(firstLoad)toast('An error occurred — see console','error');});
   window.addEventListener('unhandledrejection',e=>{console.error('Unhandled promise rejection:',e.reason);});
+  /* ── F: offline / reconnect sync + service worker (offline app shell) ── */
+  window.addEventListener('offline',()=>{updateSyncUI('offline');toast('You’re offline — changes will queue and sync when you reconnect','warning');});
+  window.addEventListener('online',()=>{toast('Back online — syncing…','info');flushPending();updateSyncUI(pendingWrites.length?'pending':'live');});
+  if(!navigator.onLine)updateSyncUI('offline');
+  if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
+    /* Registers a sibling sw.js if present (full offline app-shell). If absent it fails silently — Firestore's offline cache and the queued-write retry still work without it. */
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
   const pls=document.getElementById('pl-stage');if(pls)pls.innerHTML=PL_STAGES.map(s=>`<option>${s}</option>`).join('');
+  const plsrc=document.getElementById('pl-source');if(plsrc)plsrc.innerHTML='<option value="">— Source —</option>'+LEAD_SOURCES.map(s=>`<option>${esc(s)}</option>`).join('');
   ['sr-zone','dl-zone','pl-zone'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— Zone —</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');});
   const dlb=document.getElementById('dl-blocker');if(dlb)dlb.innerHTML=DL_BLOCKERS.map(b=>`<option value="${b.code}">${esc(b.label)}</option>`).join('');
   const dlo=document.getElementById('dl-owner');if(dlo)dlo.innerHTML='<option value="">— Owner —</option>'+DL_OWNERS.map(o=>`<option>${esc(o)}</option>`).join('');
