@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="theme-color" content="#0A0F1E">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AIS OS">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
 <title>AIS Expansion OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -495,7 +500,7 @@ canvas{max-height:220px;}
 @media(max-width:768px){.form-input,.form-select,.form-textarea{font-size:16px!important;}}
 @media print{.sidebar,.topbar,.bottom-nav,.toast-stack,.modal,.cmd-overlay,#nbar,.guest-banner,.file-warn{display:none!important;}.main{margin-left:0!important;}}
 </style>
-<link rel="manifest" href="data:application/json,{%22name%22:%22AIS%20Expansion%20OS%22,%22short_name%22:%22AIS%20OS%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230A0F1E%22,%22theme_color%22:%22%233B82F6%22,%22icons%22:[{%22src%22:%22https://www.aiswindows.com/favicon.ico%22,%22sizes%22:%22any%22,%22type%22:%22image/x-icon%22}]}">
+<link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
 <div class="file-warn" id="fileProtoWarn">⚠️ Firebase requires a web server — run <code>python -m http.server</code> or use Live Server, then open <code>http://localhost:8000</code></div>
@@ -629,6 +634,7 @@ canvas{max-height:220px;}
         <span>Search…</span>
         <kbd>Ctrl K</kbd>
       </button>
+      <button id="installBtn" title="Install this app" style="display:none;align-items:center;gap:6px;background:var(--c-blue,#3B82F6);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:0.74rem;font-weight:600;cursor:pointer;margin-right:4px"><i class="fas fa-circle-down"></i> Install</button>
       <div class="notif-wrap">
         <button class="notif-btn" id="notifBtn" aria-label="Notifications" aria-haspopup="true">
           <i class="fas fa-bell"></i>
@@ -1023,6 +1029,11 @@ let sound=localStorage.getItem('ais_sound')!=='off';
 let undoStack=[],cmdIdx=-1;
 let leafletMap=null,mapInitialized=false,mapFilter='all';
 let geminiKey=localStorage.getItem('ais_gemini_key')||'';
+/* AI brief cache — stops the Gemini free-tier 429 by NOT re-calling on every render. Served from cache unless forced or stale; backs off on 429. */
+const AI_BRIEF_TTL=30*60*1000;
+let _aiBriefLoading=false;
+let _aiBrief=(()=>{try{return JSON.parse(localStorage.getItem('ais_ai_brief')||'null')||{html:null,at:0,cooldownUntil:0};}catch(_){return{html:null,at:0,cooldownUntil:0};}})();
+function persistAIBrief(){try{localStorage.setItem('ais_ai_brief',JSON.stringify(_aiBrief));}catch(_){}}
 let todayRmFilter=localStorage.getItem('ais_today_rm')||'all';
 /* IMPROVEMENT: per-render memo caches (perf + correctness on optimistic edits) */
 let _statsCache=new WeakMap();
@@ -1628,22 +1639,29 @@ async function renderAIBrief(){
       <button id="saveKeyBtn">Save</button>
     </div>
   </div>`;
-  document.getElementById('saveKeyBtn')?.addEventListener('click',()=>{geminiKey=document.getElementById('geminiKeyInput').value.trim();localStorage.setItem('ais_gemini_key',geminiKey);toast('API key saved','success');generateAIBrief();});
-  document.getElementById('refreshBriefBtn')?.addEventListener('click',generateAIBrief);
+  document.getElementById('saveKeyBtn')?.addEventListener('click',()=>{geminiKey=document.getElementById('geminiKeyInput').value.trim();localStorage.setItem('ais_gemini_key',geminiKey);_aiBrief={html:null,at:0,cooldownUntil:0};persistAIBrief();toast('API key saved','success');generateAIBrief(true);});
+  document.getElementById('refreshBriefBtn')?.addEventListener('click',()=>generateAIBrief(true));
   document.getElementById('toggleBriefBtn')?.addEventListener('click',()=>{const b=document.getElementById('aiBriefBody');const i=document.querySelector('#toggleBriefBtn i');if(!b||!i)return;if(b.style.display==='none'){b.style.display='';i.className='fas fa-chevron-up';}else{b.style.display='none';i.className='fas fa-chevron-down';}});
-  generateAIBrief();
+  generateAIBrief(false);
 }
-async function generateAIBrief(){
-  const body=document.getElementById('aiBriefBody');if(!body)return;
-  body.innerHTML='<div class="ai-loading"><i class="fas fa-spinner"></i> Generating insights…</div>';
-  if(!geminiKey||geminiKey.length<20){
-    body.innerHTML=`<div class="ai-body">
+function ruleBasedHTML(note){
+  return `<div class="ai-body">
       <div class="ai-col green"><div class="ai-col-title green"><i class="fas fa-check-circle"></i> What's Working</div>${buildRuleBased('positive')}</div>
       <div class="ai-col amber"><div class="ai-col-title amber"><i class="fas fa-exclamation-triangle"></i> Needs Attention</div>${buildRuleBased('concerns')}</div>
       <div class="ai-col blue"><div class="ai-col-title blue"><i class="fas fa-lightbulb"></i> Recommended Actions</div>${buildRuleBased('actions')}</div>
-    </div>`;return;
-  }
-  /* Real Gemini API call */
+    </div>${note?`<div style="padding:6px 18px;font-size:0.68rem;color:var(--c-text3)">${esc(note)}</div>`:''}`;
+}
+async function generateAIBrief(force){
+  const body=document.getElementById('aiBriefBody');if(!body)return;
+  if(!geminiKey||geminiKey.length<20){body.innerHTML=ruleBasedHTML('Add a Gemini API key below to enable AI insights — showing rule-based brief.');return;}
+  const now=Date.now();
+  /* Serve cached brief unless the user forced a refresh — this is what prevents the 429. */
+  if(!force&&_aiBrief.html&&(now-_aiBrief.at)<AI_BRIEF_TTL){body.innerHTML=_aiBrief.html;return;}
+  /* After a 429, back off (default 10 min) before trying again. */
+  if(!force&&now<_aiBrief.cooldownUntil){body.innerHTML=_aiBrief.html||ruleBasedHTML('Gemini rate-limited — showing rule-based brief; will retry automatically.');return;}
+  if(_aiBriefLoading){if(_aiBrief.html)body.innerHTML=_aiBrief.html;return;}
+  _aiBriefLoading=true;
+  if(!_aiBrief.html||force)body.innerHTML='<div class="ai-loading"><i class="fas fa-spinner"></i> Generating insights…</div>';
   const srM={total:activeSR().length,critical:activeSR().filter(s=>srLevel(s)==='critical').length,delayed:activeSR().filter(s=>srLevel(s)==='warning'||srLevel(s)==='critical').length,completed:S.showrooms.filter(s=>isSRDone(s)).length};
   const dlM={total:activeDL().length,critical:activeDL().filter(d=>dlTimeline(d).level==='critical').length,dropped:S.dealers.filter(d=>isDLRej(d)).length,completed:S.dealers.filter(d=>isDLDone(d)).length};
   const topDelayed=activeSR().sort((a,b)=>srStats(b).max-srStats(a).max).slice(0,3).map(s=>{const b=srStats(s).blocking;return `${s.name} (${s.city}, bottleneck: ${b?b.phase+' '+b.days+'d':'none'}, RM: ${s.rm})`;}).join('; ');
@@ -1652,21 +1670,20 @@ async function generateAIBrief(){
   try{
     const gUrl=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(geminiKey)}`;
     const res=await fetch(gUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:600}})});
+    if(res.status===429){_aiBrief.cooldownUntil=Date.now()+10*60*1000;persistAIBrief();body.innerHTML=_aiBrief.html||ruleBasedHTML('Gemini quota reached (429) — showing rule-based brief. It refreshes automatically in ~10 min; tap refresh to retry sooner, or use an API key with higher quota.');return;}
     if(!res.ok)throw new Error(`Gemini API ${res.status}`);
     const data=await res.json();const raw=data.candidates?.[0]?.content?.parts?.[0]?.text||'{}';
     let parsed;try{parsed=JSON.parse(raw.replace(/```json?|```/g,'').trim());}catch(e){parsed=null;}
     if(parsed&&parsed.positive&&parsed.concerns&&parsed.actions){
-      body.innerHTML=`<div class="ai-body">
+      const html=`<div class="ai-body">
         <div class="ai-col green"><div class="ai-col-title green"><i class="fas fa-check-circle"></i> What's Working</div>${parsed.positive.map(i=>`<div class="ai-line">${esc(i)}</div>`).join('')}</div>
         <div class="ai-col amber"><div class="ai-col-title amber"><i class="fas fa-exclamation-triangle"></i> Needs Attention</div>${parsed.concerns.map(i=>`<div class="ai-line">${esc(i)}</div>`).join('')}</div>
         <div class="ai-col blue"><div class="ai-col-title blue"><i class="fas fa-lightbulb"></i> Recommended Actions</div>${parsed.actions.map(i=>`<div class="ai-line">${esc(i)}</div>`).join('')}</div>
-      </div>`;
-    }else{body.innerHTML=`<div class="ai-body"><div class="ai-col blue" style="grid-column:1/-1"><div class="ai-line">${esc(raw.slice(0,400))}</div></div></div>`;}
-  }catch(e){body.innerHTML=`<div class="ai-body">
-    <div class="ai-col green"><div class="ai-col-title green"><i class="fas fa-check-circle"></i> What's Working</div>${buildRuleBased('positive')}</div>
-    <div class="ai-col amber"><div class="ai-col-title amber"><i class="fas fa-exclamation-triangle"></i> Needs Attention</div>${buildRuleBased('concerns')}</div>
-    <div class="ai-col blue"><div class="ai-col-title blue"><i class="fas fa-lightbulb"></i> Recommended Actions</div>${buildRuleBased('actions')}</div>
-  </div><div style="padding:6px 18px;font-size:0.68rem;color:var(--c-text3)">AI error: ${esc(e.message)} — showing rule-based brief</div>`;}
+      </div><div style="padding:6px 18px;font-size:0.62rem;color:var(--c-text3)">Updated ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} · cached for 30 min</div>`;
+      _aiBrief={html,at:Date.now(),cooldownUntil:0};persistAIBrief();body.innerHTML=html;
+    }else{body.innerHTML=_aiBrief.html||`<div class="ai-body"><div class="ai-col blue" style="grid-column:1/-1"><div class="ai-line">${esc(raw.slice(0,400))}</div></div></div>`;}
+  }catch(e){body.innerHTML=_aiBrief.html||ruleBasedHTML('AI error: '+e.message+' — showing rule-based brief');}
+  finally{_aiBriefLoading=false;}
 }
 function buildRuleBased(section){
   const srC=activeSR().filter(s=>srLevel(s)==='critical').length;
@@ -3320,6 +3337,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     /* Registers a sibling sw.js if present (full offline app-shell). If absent it fails silently — Firestore's offline cache and the queued-write retry still work without it. */
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
+  /* ── PWA install prompt (Chrome/Edge/Android). iOS has no prompt API — users install via Share → Add to Home Screen. ── */
+  let _deferredPrompt=null;
+  const _installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=document.getElementById('installBtn');if(b&&!_installed)b.style.display='inline-flex';});
+  window.addEventListener('appinstalled',()=>{_deferredPrompt=null;const b=document.getElementById('installBtn');if(b)b.style.display='none';toast('App installed','success');});
+  document.getElementById('installBtn')?.addEventListener('click',async()=>{
+    if(_deferredPrompt){_deferredPrompt.prompt();try{await _deferredPrompt.userChoice;}catch(_){}_deferredPrompt=null;const b=document.getElementById('installBtn');if(b)b.style.display='none';return;}
+    const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    toast(ios?'On iPhone/iPad: tap the Share icon, then “Add to Home Screen”':'Use your browser menu → “Install app” / “Add to Home screen”','info');
+  });
   const pls=document.getElementById('pl-stage');if(pls)pls.innerHTML=PL_STAGES.map(s=>`<option>${s}</option>`).join('');
   const plsrc=document.getElementById('pl-source');if(plsrc)plsrc.innerHTML='<option value="">— Source —</option>'+LEAD_SOURCES.map(s=>`<option>${esc(s)}</option>`).join('');
   ['sr-zone','dl-zone','pl-zone'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— Zone —</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');});
