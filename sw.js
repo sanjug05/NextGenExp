@@ -1,20 +1,14 @@
-/* AIS Expansion OS — offline app-shell service worker.
-   Place this file in the SAME folder as the app HTML (e.g. /aevo.html + /sw.js),
-   or rename the app to index.html and keep sw.js beside it.
-
-   Strategy:
-   - Navigations (the app shell): network-first, fall back to cache when offline,
-     so a fresh deploy is always picked up while online but the app still opens offline.
-   - Same-origin + known CDN assets (Leaflet, Chart.js, Font Awesome, fonts):
-     stale-while-revalidate.
-   - Firebase / Firestore / Google identity traffic is NEVER intercepted or cached —
-     it always goes straight to the network (Firestore has its own offline cache). */
-
-const CACHE = 'ais-os-shell-v1';
+const CACHE = 'ais-os-shell-v2';
 const SKIP = /firestore|firebaseio|googleapis|identitytoolkit|gstatic\.com\/firebasejs|securetoken/;
 const CDN  = /cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/;
 
-self.addEventListener('install', () => self.skipWaiting());
+/* Do NOT skipWaiting here — wait so the page can offer "Update now". */
+self.addEventListener('install', () => {});
+
+/* The page asks us to take over when the user accepts the update. */
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
+});
 
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
