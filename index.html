@@ -48,8 +48,8 @@
   --shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 16px rgba(0,0,0,0.08);--shadow-lg:0 8px 32px rgba(0,0,0,0.10);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:14px;}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;font-size:14px;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;overflow-x:hidden;font-size:0.875rem;}
 button{font-family:inherit;cursor:pointer;}input,select,textarea{font-family:inherit;}
 a{color:inherit;text-decoration:none;}
 ::-webkit-scrollbar{width:5px;height:5px;}
@@ -149,7 +149,7 @@ a{color:inherit;text-decoration:none;}
 .guest-banner{background:linear-gradient(90deg,rgba(245,158,11,0.15),rgba(245,158,11,0.07));border-bottom:1px solid rgba(245,158,11,0.2);padding:8px 24px;font-size:0.75rem;color:#FCD34D;display:none;align-items:center;gap:10px;}
 .guest-banner.on{display:flex;}
 .guest-banner button{margin-left:auto;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);color:#FCD34D;font-size:0.7rem;font-weight:700;padding:4px 12px;border-radius:var(--r-full);cursor:pointer;}
-.content{flex:1;padding:24px;overflow-x:hidden;overflow-y:auto;min-width:0;}
+.content{flex:1;padding:18px;overflow-x:hidden;overflow-y:auto;min-width:0;}
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottomnav);background:var(--c-bg1);border-top:1px solid var(--c-border);z-index:100;grid-template-columns:repeat(5,1fr);align-items:center;}
 .bn-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;border:none;background:none;color:var(--c-text3);font-size:0.58rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;transition:all 120ms;padding:4px;position:relative;}
 .bn-btn i{font-size:1.1rem;}
@@ -177,7 +177,7 @@ a{color:inherit;text-decoration:none;}
 .today-date{font-size:0.75rem;color:var(--c-text3);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;}
 .today-title{font-size:1.6rem;font-weight:800;letter-spacing:-0.04em;margin-bottom:4px;}
 .today-sub{font-size:0.84rem;color:var(--c-text2);}
-.today-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:28px;}
+.today-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:18px;}
 .tkpi{background:var(--c-bg1);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all 180ms;}
 .tkpi:hover{border-color:var(--c-border2);transform:translateY(-1px);box-shadow:var(--shadow-md);}
 .tkpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--tkpi-c,var(--c-blue));}
@@ -468,15 +468,15 @@ canvas{max-height:220px;}
    Tablets, foldables unfolded (e.g. Galaxy Z Fold), iPad and every larger screen keep the
    FULL desktop layout — sidebar always visible with labels, no hamburger, no bottom nav. */
 @media(max-width:600px),(max-width:950px) and (max-height:540px){
-  html{font-size:13.5px;}            /* smaller fonts on mobile */
-  body{font-size:12.5px;}
+  html{font-size:13px;}              /* smaller, denser fonts on phones */
+  body{font-size:0.85rem;}
   .main{margin-left:0;padding-bottom:var(--bottomnav);}
   .sidebar{transform:translateX(-100%);width:240px;}
   .sidebar.open{transform:translateX(0);box-shadow:var(--shadow-lg);}
   .hamburger{display:flex;}
   .bottom-nav{display:grid;}
-  .topbar{padding:0 14px;}
-  .content{padding:14px;}
+  .topbar{padding:0 10px;}
+  .content{padding:10px 8px;}
   .form-row{grid-template-columns:1fr;}
   .ai-body{grid-template-columns:1fr;}
   .analytics-grid{grid-template-columns:1fr;}
