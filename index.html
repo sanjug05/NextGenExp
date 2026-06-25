@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=5.0">
 <meta name="theme-color" content="#0A0F1E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -494,6 +494,25 @@ canvas{max-height:220px;}
 }
 @media(max-width:600px),(max-width:950px) and (max-height:540px){.form-input,.form-select,.form-textarea{font-size:16px!important;}}
 @media print{.sidebar,.topbar,.bottom-nav,.toast-stack,.modal,.cmd-overlay,#nbar,.guest-banner,.file-warn{display:none!important;}.main{margin-left:0!important;}}
+/* ── PWA install + update banners (plain DOM; mirror the KPI dashboard) ── */
+#pwaUpdateBar,#pwaInstallBar{position:fixed;left:50%;transform:translateX(-50%);z-index:99999;display:none;align-items:center;gap:12px;padding:11px 16px;border-radius:14px;font-size:13px;color:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5);backdrop-filter:blur(10px);max-width:calc(100vw - 24px);bottom:calc(18px + env(safe-area-inset-bottom));}
+#pwaUpdateBar{background:linear-gradient(135deg,#0EA5E9,#2563EB);border:1px solid rgba(255,255,255,.18);}
+#pwaInstallBar{background:rgba(13,20,40,.96);border:1px solid var(--c-blue,#3B82F6);}
+#pwaUpdateBar span,#pwaInstallBar span{display:flex;align-items:center;gap:7px;}
+#pwaUpdateBar button,#pwaInstallBar button{cursor:pointer;border:none;border-radius:9px;font-weight:700;font-size:12px;padding:7px 13px;white-space:nowrap;font-family:inherit;}
+.pwa-btn-primary{background:#fff;color:#0A1628;}
+.pwa-btn-ghost{background:rgba(255,255,255,.14);color:#fff;}
+/* When the bottom nav is visible (phones), lift the banners above it */
+@media(max-width:600px),(max-width:950px) and (max-height:540px){
+  #pwaUpdateBar,#pwaInstallBar{bottom:calc(var(--bottomnav) + 12px + env(safe-area-inset-bottom));width:calc(100vw - 20px);justify-content:space-between;}
+}
+/* ── PWA standalone (installed app): respect notch / home-indicator safe areas ── */
+@media(display-mode:standalone){
+  .topbar{padding-top:env(safe-area-inset-top);height:calc(var(--topbar) + env(safe-area-inset-top));}
+  .sidebar{padding-top:env(safe-area-inset-top);}
+  .bottom-nav{padding-bottom:env(safe-area-inset-bottom);height:calc(var(--bottomnav) + env(safe-area-inset-bottom));}
+  .main{padding-bottom:env(safe-area-inset-bottom);}
+}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
@@ -529,6 +548,17 @@ canvas{max-height:220px;}
 <!-- APP -->
 <div id="app">
 <div class="overlay" id="overlay"></div>
+<!-- PWA banners (install + update) -->
+<div id="pwaUpdateBar">
+  <span><i class="fas fa-arrows-rotate"></i> A new version is available.</span>
+  <button class="pwa-btn-primary" id="pwaReloadBtn">Update now</button>
+  <button class="pwa-btn-ghost" id="pwaUpdateDismiss">Later</button>
+</div>
+<div id="pwaInstallBar">
+  <span><i class="fas fa-circle-down"></i> Install AIS Expansion OS as an app</span>
+  <button class="pwa-btn-primary" id="pwaInstallBtn">Install</button>
+  <button class="pwa-btn-ghost" id="pwaInstallDismiss">✕</button>
+</div>
 
 <!-- CMD PALETTE -->
 <div class="cmd-overlay" id="cmdOverlay" role="dialog" aria-modal="true" aria-label="Command palette">
@@ -547,7 +577,7 @@ canvas{max-height:220px;}
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <div class="brand">
-      <div class="brand-icon"><img src=></div>
+      <div class="brand-icon"><img src="https://www.aiswindows.com/assets/images/ais-windows-logo.svg" alt="AIS"></div>
       <div><div class="brand-name">Expansion OS</div><div class="brand-ver">AIS Windows · v9.2</div></div>
     </div>
   </div>
@@ -3328,20 +3358,38 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('offline',()=>{updateSyncUI('offline');toast('You’re offline — changes will queue and sync when you reconnect','warning');});
   window.addEventListener('online',()=>{toast('Back online — syncing…','info');flushPending();updateSyncUI(pendingWrites.length?'pending':'live');});
   if(!navigator.onLine)updateSyncUI('offline');
-  if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
-    /* Registers a sibling sw.js if present (full offline app-shell). If absent it fails silently — Firestore's offline cache and the queued-write retry still work without it. */
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  }
-  /* ── PWA install prompt (Chrome/Edge/Android). iOS has no prompt API — users install via Share → Add to Home Screen. ── */
-  let _deferredPrompt=null;
+  /* ── PWA: service worker with update detection + install/update banners (mirrors the KPI dashboard) ── */
   const _installed=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=document.getElementById('installBtn');if(b&&!_installed)b.style.display='inline-flex';});
-  window.addEventListener('appinstalled',()=>{_deferredPrompt=null;const b=document.getElementById('installBtn');if(b)b.style.display='none';toast('App installed','success');});
-  document.getElementById('installBtn')?.addEventListener('click',async()=>{
-    if(_deferredPrompt){_deferredPrompt.prompt();try{await _deferredPrompt.userChoice;}catch(_){}_deferredPrompt=null;const b=document.getElementById('installBtn');if(b)b.style.display='none';return;}
+  let _deferredPrompt=null,_swReg=null,_swRefreshing=false;
+  const _bar=id=>document.getElementById(id);
+  const showUpdateBar=()=>{const b=_bar('pwaUpdateBar');if(b)b.style.display='flex';};
+  const hideUpdateBar=()=>{const b=_bar('pwaUpdateBar');if(b)b.style.display='none';};
+  const showInstallBar=()=>{if(_installed)return;if(localStorage.getItem('ais_install_dismissed')==='1')return;const b=_bar('pwaInstallBar');if(b)b.style.display='flex';};
+  const hideInstallBar=()=>{const b=_bar('pwaInstallBar');if(b)b.style.display='none';};
+  if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
+    /* Registers a sibling sw.js if present (full offline app-shell). Absent → fails silently; Firestore cache + queued writes still work. */
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      _swReg=reg;
+      if(reg.waiting&&navigator.serviceWorker.controller)showUpdateBar(); /* a new version is already waiting */
+      reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)showUpdateBar();});});
+      setInterval(()=>reg.update().catch(()=>{}),60*60*1000); /* hourly update check */
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{});});
+    }).catch(()=>{});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(_swRefreshing)return;_swRefreshing=true;location.reload();});
+  }
+  _bar('pwaReloadBtn')?.addEventListener('click',()=>{const w=_swReg&&_swReg.waiting;if(w)w.postMessage('SKIP_WAITING');else location.reload();hideUpdateBar();});
+  _bar('pwaUpdateDismiss')?.addEventListener('click',hideUpdateBar);
+  /* Install flow (Chrome/Edge/Android). iOS has no prompt API — manual Add to Home Screen. */
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=_bar('installBtn');if(b&&!_installed)b.style.display='inline-flex';showInstallBar();});
+  window.addEventListener('appinstalled',()=>{_deferredPrompt=null;hideInstallBar();const b=_bar('installBtn');if(b)b.style.display='none';toast('App installed','success');});
+  async function _doInstall(){
+    if(_deferredPrompt){_deferredPrompt.prompt();try{await _deferredPrompt.userChoice;}catch(_){}_deferredPrompt=null;hideInstallBar();const b=_bar('installBtn');if(b)b.style.display='none';return;}
     const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
     toast(ios?'On iPhone/iPad: tap the Share icon, then “Add to Home Screen”':'Use your browser menu → “Install app” / “Add to Home screen”','info');
-  });
+  }
+  _bar('installBtn')?.addEventListener('click',_doInstall);
+  _bar('pwaInstallBtn')?.addEventListener('click',_doInstall);
+  _bar('pwaInstallDismiss')?.addEventListener('click',()=>{hideInstallBar();localStorage.setItem('ais_install_dismissed','1');});
   const pls=document.getElementById('pl-stage');if(pls)pls.innerHTML=PL_STAGES.map(s=>`<option>${s}</option>`).join('');
   const plsrc=document.getElementById('pl-source');if(plsrc)plsrc.innerHTML='<option value="">— Source —</option>'+LEAD_SOURCES.map(s=>`<option>${esc(s)}</option>`).join('');
   ['sr-zone','dl-zone','pl-zone'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='<option value="">— Zone —</option>'+ZONES.map(z=>`<option>${esc(z)}</option>`).join('');});
